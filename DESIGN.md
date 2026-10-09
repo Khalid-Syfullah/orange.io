@@ -70,3 +70,8 @@ Respect `prefers-reduced-motion`. Split text keeps an `aria-label` with the full
 - Use uppercase for display text, or more than one italic word per headline.
 - Animate scroll-driven elements with time, or set React state per scroll frame.
 - Copy any reference site's assets, copy, imagery or logo.
+
+## UI kit (src/components)
+- `ui/button` variants `pill`, `pill-light`, `orange` (arrow chip nudges 2px); `ui/badge` variant `tag` (wrapped by `design/tag`).
+- `design/split-reveal` (`whileInView` once, or `progress` + `range=[in,out]`), `design/hover-roll`, `design/hairlines` (optional `visible` MotionValue), `design/grain-overlay`, `design/chrome` (mark, menu Sheet, chapter rail, CTA).
+- Shared scroll value: `src/lib/progress.ts` (`progress`); chapters and scenes: `src/lib/timeline.ts`. All shown at `/design`.

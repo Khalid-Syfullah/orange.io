@@ -18,6 +18,8 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // Orange.io tag: 4px radius, 10% tint, mono 9px uppercase.
+        tag: "h-auto rounded-[4px] bg-foreground/10 px-2 py-[5px] font-mono text-[9px] leading-none tracking-[0.12em] text-foreground uppercase",
       },
     },
     defaultVariants: {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { fontVariables } from "@/lib/fonts";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { GrainOverlay } from "@/components/design/grain-overlay";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${fontVariables} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <TooltipProvider>{children}</TooltipProvider>
-        <div className="grain" aria-hidden />
+        <GrainOverlay />
       </body>
     </html>
   );

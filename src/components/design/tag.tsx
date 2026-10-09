@@ -1,13 +1,6 @@
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
-export function Tag({ className, ...props }: React.ComponentProps<"span">) {
-  return (
-    <span
-      className={cn(
-        "inline-block rounded-[4px] bg-foreground/10 px-2 py-[5px] font-mono text-[9px] leading-none font-medium tracking-[0.12em] uppercase",
-        className,
-      )}
-      {...props}
-    />
-  );
+/** Orange.io tag: the shadcn Badge in its `tag` variant. */
+export function Tag(props: Omit<React.ComponentProps<typeof Badge>, "variant">) {
+  return <Badge variant="tag" {...props} />;
 }

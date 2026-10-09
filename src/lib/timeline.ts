@@ -27,3 +27,19 @@ export function activeScene(p: number): SceneName {
   const names = Object.keys(SCENES) as SceneName[];
   return names.find((n) => p < SCENES[n][1]) ?? names[names.length - 1];
 }
+
+// Chapters group scenes. Ranges are derived from SCENES so there is one source.
+export const CHAPTERS = [
+  { id: "seed", label: "Ch. 1 The Seed", range: [SCENES.opening[0], SCENES.watering[1]] },
+  { id: "growth", label: "Ch. 2 The Growth", range: [SCENES.growing[0], SCENES.fruiting[1]] },
+  { id: "harvest", label: "Ch. 3 The Harvest", range: [SCENES.plucking[0], SCENES.floating[1]] },
+  { id: "inside", label: "Ch. 4 The Inside", range: [SCENES.splitting[0], SCENES.reveal[1]] },
+] as const satisfies readonly { id: string; label: string; range: readonly [number, number] }[];
+
+/** Index of the chapter that owns global progress `p`. */
+export function chapterIndex(p: number): number {
+  for (let i = CHAPTERS.length - 1; i >= 0; i--) {
+    if (p >= CHAPTERS[i].range[0]) return i;
+  }
+  return 0;
+}

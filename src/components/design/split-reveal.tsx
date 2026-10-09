@@ -2,43 +2,77 @@
 
 import {
   motion,
-  useMotionValueEvent,
   useReducedMotion,
   useTransform,
   type MotionValue,
 } from "motion/react";
-import { useState } from "react";
 import { EASE } from "@/lib/motion";
 
 type Props = {
   text: string;
   className?: string;
-  /** Stagger between characters, seconds (12 to 20ms). */
+  /** Stagger between characters in seconds (12 to 20ms). Used by the whileInView driver. */
   stagger?: number;
   delay?: number;
-  /** When given, characters are revealed by this 0-1 MotionValue instead of whileInView. */
+  /**
+   * Scroll driver. When `progress` is given, the line reveals across the first
+   * part of `range` and hides again across the last part, in either scroll
+   * direction. `range` is the [in, out] progress window of the beat.
+   */
   progress?: MotionValue<number>;
+  range?: readonly [number, number];
   as?: "h1" | "h2" | "h3" | "p" | "span";
 };
 
-function Char({
+const REVEAL_SHARE = 0.35; // share of the range spent revealing
+const HIDE_SHARE = 0.2; // share of the range spent hiding
+
+function ScrollChar({
   ch,
   index,
   total,
   progress,
+  range,
 }: {
   ch: string;
   index: number;
   total: number;
   progress: MotionValue<number>;
+  range: readonly [number, number];
 }) {
-  const start = (index / total) * 0.7;
-  const t = useTransform(progress, [start, start + 0.3], [0, 1], { clamp: true });
-  const y = useTransform(t, [0, 1], ["0.4em", "0em"]);
+  const [a, b] = range;
+  const len = b - a;
+  const revealSpan = len * REVEAL_SHARE;
+  const charSpan = revealSpan * 0.4;
+  const start = a + (index / Math.max(total - 1, 1)) * (revealSpan - charSpan);
+  const hideStart = b - len * HIDE_SHARE;
+  const t = useTransform(progress, [start, start + charSpan, hideStart, b], [0, 1, 1, 0]);
+  const y = useTransform(progress, [start, start + charSpan, hideStart, b], ["0.4em", "0em", "0em", "-0.2em"]);
   return (
-    <motion.span style={{ opacity: t, y, display: "inline-block", whiteSpace: "pre" }}>
-      {ch}
-    </motion.span>
+    <motion.span style={{ opacity: t, y, display: "inline-block" }}>{ch}</motion.span>
+  );
+}
+
+function ScrollFade({
+  progress,
+  range,
+  className,
+  text,
+  Tag,
+}: {
+  progress: MotionValue<number>;
+  range: readonly [number, number];
+  className?: string;
+  text: string;
+  Tag: typeof motion.h2;
+}) {
+  const [a, b] = range;
+  const e = (b - a) * 0.15;
+  const opacity = useTransform(progress, [a, a + e, b - e, b], [0, 1, 1, 0]);
+  return (
+    <Tag className={className} style={{ opacity }}>
+      {text}
+    </Tag>
   );
 }
 
@@ -49,16 +83,16 @@ export function SplitReveal({
   stagger = 0.016,
   delay = 0,
   progress,
+  range = [0, 1],
   as = "h2",
 }: Props) {
   const reduce = useReducedMotion();
-  const Tag = motion[as];
-  const words = text.split(" ");
-  let n = 0;
-  const total = text.length;
+  const Tag = motion[as] as typeof motion.h2;
 
   if (reduce) {
-    return (
+    return progress ? (
+      <ScrollFade progress={progress} range={range} className={className} text={text} Tag={Tag} />
+    ) : (
       <Tag
         className={className}
         initial={{ opacity: 0 }}
@@ -71,20 +105,24 @@ export function SplitReveal({
     );
   }
 
+  const words = text.split(" ");
+  const total = text.replace(/ /g, "").length;
+  let n = 0;
+
   return (
     <Tag
       className={className}
       aria-label={text}
-      initial="hidden"
+      initial={progress ? undefined : "hidden"}
       whileInView={progress ? undefined : "show"}
       viewport={{ once: true, amount: 0.6 }}
     >
       {words.map((word, wi) => (
-        <span key={wi} aria-hidden style={{ display: "inline-block", whiteSpace: "nowrap" }}>
+        <span key={wi} aria-hidden="true" style={{ display: "inline-block", whiteSpace: "nowrap" }}>
           {Array.from(word).map((ch) => {
             const i = n++;
             return progress ? (
-              <Char key={i} ch={ch} index={i} total={total} progress={progress} />
+              <ScrollChar key={i} ch={ch} index={i} total={total} progress={progress} range={range} />
             ) : (
               <motion.span
                 key={i}
@@ -107,14 +145,4 @@ export function SplitReveal({
       ))}
     </Tag>
   );
-}
-
-/** Convenience for reading a MotionValue without re-rendering per frame elsewhere. */
-export function useProgressFlag(progress: MotionValue<number>, at: number) {
-  const [on, setOn] = useState(false);
-  useMotionValueEvent(progress, "change", (v) => {
-    const next = v >= at;
-    setOn((prev) => (prev === next ? prev : next));
-  });
-  return on;
 }

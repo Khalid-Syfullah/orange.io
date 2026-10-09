@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SplitReveal } from "@/components/design/split-reveal";
-import { PillButton } from "@/components/design/pill-button";
+import { ButtonDemos, HoverRollDemo, LiveChrome, ProgressScrubber } from "@/components/design/design-demos";
 import { Tag } from "@/components/design/tag";
 import { RegistrationMark } from "@/components/design/registration-mark";
 
@@ -38,6 +38,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function DesignPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-[5.3vw] py-16">
+      <LiveChrome />
       <h1 className="text-display-xl mb-12">
         Design <em>system</em>
       </h1>
@@ -65,12 +66,23 @@ export default function DesignPage() {
         </div>
       </Section>
 
-      <Section title="Pill button and tag">
-        <div className="flex flex-wrap items-center gap-6">
-          <PillButton href="#">Say hello</PillButton>
+      <Section title="Buttons (pill, orange, pill-light)">
+        <ButtonDemos />
+      </Section>
+
+      <Section title="Tag (Badge variant)">
+        <div className="flex flex-wrap items-center gap-3">
           <Tag>Chapter 1</Tag>
           <Tag>Seed</Tag>
         </div>
+      </Section>
+
+      <Section title="Hover roll">
+        <HoverRollDemo />
+      </Section>
+
+      <Section title="Scroll progress, chapters and scroll-driven reveal">
+        <ProgressScrubber />
       </Section>
 
       <Section title="Hairline grid with registration marks">
