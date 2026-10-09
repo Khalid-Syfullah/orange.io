@@ -77,7 +77,7 @@ const BEAT_SPECS: readonly BeatSpec[] = [
   { id: "hero", slot: "hero", scene: "opening", atVh: 2, dwellVh: 56, side: "left", kind: "headline", title: "Great things grow together.", lead: "TODO: hero lead line one. TODO: hero lead line two.", intro: true },
   { id: "plant", slot: "left-line", scene: "watering", atVh: 20, dwellVh: 100, side: "left", kind: "headline", title: "We plant.", lead: "TODO: one line about the seed." },
   { id: "tend", slot: "left-line", scene: "watering", atVh: 150, dwellVh: 100, side: "left", kind: "headline", title: "Every idea needs care.", lead: "TODO: one line about the water." },
-  { id: "wait", slot: "left-line", scene: "growth", atVh: 25, dwellVh: 110, side: "left", kind: "headline", title: "We wait.", lead: "TODO: one line about patience." },
+  { id: "wait", slot: "left-line", scene: "growth", atVh: 25, dwellVh: 110, side: "left", kind: "headline", title: "Growth takes time.", lead: "TODO: one line about patience." },
   { id: "grow", slot: "left-line", scene: "ripening", atVh: 30, dwellVh: 110, side: "left", kind: "headline", title: "We grow.", lead: "TODO: one line about ripening." },
   { id: "pick", slot: "left-line", scene: "plucking", atVh: 25, dwellVh: 100, side: "left", kind: "headline", title: "We pick.", lead: "TODO: one line about the harvest." },
   { id: "floating-card", slot: "right-card", scene: "floating", atVh: 40, dwellVh: 120, side: "right", kind: "card", tag: "TODO tag", title: "TODO card title", lead: "TODO: a short paragraph that sits in the right column over the art." },
@@ -214,7 +214,7 @@ export const TRANSITION_VH = 45;
 export type Boundary = { index: number; from: SceneName; to: SceneName; atVh: number; startVh: number };
 
 /** Scenes entered by a slow camera dolly instead of a dissolve (the world simply continues). */
-export const NO_DISSOLVE: readonly SceneName[] = ["watering"];
+export const NO_DISSOLVE: readonly SceneName[] = ["watering", "growth", "ripening"];
 
 /** One boundary per dissolved scene change: watering->growth, growth->ripening, ... */
 export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1)
@@ -230,7 +230,7 @@ export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1)
 
 /** Named positions the fly element (the orange) travels between. x/y are viewport percent. */
 export const FLY_ANCHORS = {
-  treeFruit: { x: 70, y: 36, scale: 0.55, rotate: 0 },
+  treeFruit: { x: 66.3, y: 37.8, scale: 0.23, rotate: 0 },
   hand: { x: 63, y: 52, scale: 0.7, rotate: -24 },
   center: { x: 64, y: 50, scale: 1.3, rotate: 200 },
 } as const;
@@ -242,8 +242,8 @@ export type FlyAnchor = keyof typeof FLY_ANCHORS;
  * plucking -> floating dissolve window so the eye follows it across the cut.
  */
 export const FLY_PATH: readonly { vh: number; anchor: FlyAnchor; opacity: number }[] = [
-  { vh: 1008, anchor: "treeFruit", opacity: 0 },
-  { vh: 1060, anchor: "treeFruit", opacity: 1 },
+  { vh: 1006, anchor: "treeFruit", opacity: 0 },
+  { vh: 1010, anchor: "treeFruit", opacity: 1 },
   { vh: 1420, anchor: "treeFruit", opacity: 1 },
   { vh: 1500, anchor: "hand", opacity: 1 },
   { vh: 1587, anchor: "hand", opacity: 1 },
@@ -266,6 +266,23 @@ export const WATERING = {
   stopAt: 0.2, // the flow gradually stops
   relaxAt: 0.22, // relaxed posture again
 } as const;
+
+// --------------------------------------------------------------- growth ---
+
+/** Scene 03 windows, as progress. Each part of the tree grows inside its own window. */
+export const GROWTH = {
+  trunk: [0.22, 0.27], // the trunk gets taller
+  branches: [0.27, 0.32], // primary branches extend outward
+  leaves: [0.32, 0.35], // new leaves emerge and unfold
+  fuller: [0.35, 0.38], // secondary branches and more leaves
+  fruit: [0.38, 0.42], // fruit stems, then small green oranges
+} as const satisfies Record<string, readonly [number, number]>;
+
+/** Halftone clouds ease down to this share of their speed as growth ends (continuous: see cloudPhase). */
+export const CLOUD_SLOWDOWN = { from: 0.38, to: 0.42, speed: 0.35 } as const;
+
+/** Fruit colour goes from green to orange over this progress range (ripening scene). */
+export const FRUIT_RIPEN = [0.42, 0.56] as const;
 
 // ------------------------------------------------------------ validation ---
 

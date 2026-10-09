@@ -3,6 +3,7 @@
 import { motion, useTransform } from "motion/react";
 import { progress, velocityNorm } from "@/lib/progress";
 import { REACTIONS } from "@/lib/reactions";
+import { FRUIT_RIPEN } from "@/scroll/script";
 import { STAGE_VH } from "@/lib/timeline";
 import { flyAt, type FlyValues } from "@/scroll/fly";
 
@@ -24,13 +25,18 @@ export function FlyLayer() {
   const scale = useTransform([progress, velocityNorm], ([p, v]: number[]) => read(p).scale * (1 + REACTIONS.breath * Math.abs(v)));
   const rotate = useTransform(progress, (p) => read(p).rotate);
   const opacity = useTransform(progress, (p) => read(p).opacity);
+  // the fruit it carries ripens from green to orange (scene 04 range)
+  const fill = useTransform(progress, (p) => {
+    const t = Math.min(1, Math.max(0, (p - FRUIT_RIPEN[0]) / (FRUIT_RIPEN[1] - FRUIT_RIPEN[0])));
+    return `color-mix(in srgb, var(--orange) ${Math.round(t * 100)}%, #9db85a)`;
+  });
   const visibility = useTransform(progress, (p) => (read(p).opacity > 0.001 ? "visible" : "hidden"));
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" data-layer="fly" aria-hidden="true">
       <motion.div className="absolute top-0 left-0 will-change-transform" style={{ x, y, scale, rotate, opacity, visibility }}>
         <svg viewBox="0 0 100 100" className="-mt-[9vmin] -ml-[9vmin] size-[18vmin] overflow-visible">
-          <circle cx="50" cy="54" r="38" fill="var(--orange)" />
+          <motion.circle cx="50" cy="54" r="38" style={{ fill }} />
           <circle cx="50" cy="54" r="38" fill="none" stroke="var(--ink)" strokeOpacity="0.2" />
           <path d="M34 36 C40 28 50 26 58 30" fill="none" stroke="var(--cream)" strokeOpacity="0.7" strokeWidth="3" strokeLinecap="round" />
           <path d="M50 17 C50 8 58 3 68 4 C68 13 60 19 50 17Z" fill="var(--leaf)" />

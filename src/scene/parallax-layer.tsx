@@ -4,6 +4,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useMemo } from "react";
 import { Color, InstancedBufferAttribute, PlaneGeometry, ShaderMaterial } from "three";
 import { progress, velocityNorm } from "@/lib/progress";
+import { cloudPhase } from "@/scroll/clouds";
 import { CLOUD_FRAG, CLOUD_VERT } from "./glsl";
 import { DPR, useInvalidateOn } from "./webgl";
 
@@ -29,7 +30,8 @@ type CloudMaterial = ShaderMaterial & {
 /** Per-frame step. velocityNorm is already smoothed, clamped and exactly 0 at rest. */
 function stepClouds(m: CloudMaterial, p: number, vel: number, aspect: number, dpr: number) {
   const u = m.uniforms;
-  u.uProgress.value = p;
+  // drift phase eases down as growth ends (continuous, so the clouds never jump)
+  u.uProgress.value = cloudPhase(p);
   u.uVel.value = vel;
   u.uAspect.value = aspect;
   u.uDot.value = DOT_CSS * dpr;

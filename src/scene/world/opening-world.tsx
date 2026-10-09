@@ -5,10 +5,10 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { gsap } from "gsap";
 import type { Group, Object3D, PerspectiveCamera } from "three";
 import { progress } from "@/lib/progress";
-import { WATERING as W } from "@/scroll/script";
+import { GROWTH, WATERING as W } from "@/scroll/script";
 import { ContactShadow, Ground, Lights, Sky } from "./environment";
 import { Person, restPose, type Pose, type PersonStyle } from "./person";
-import { Tree } from "./tree";
+import { GrowingTree } from "./growing-tree";
 import { WaterStreams, WetSoil, type WaterRefs } from "./watering-effects";
 import { useInvalidateOn } from "@/scene/webgl";
 
@@ -21,7 +21,7 @@ const WORLD_OFFSET: [number, number, number] = [2.15, -1.5, 0];
 type Rig = { man: Pose; woman: Pose; cam: { dx: number; dy: number; dz: number } };
 
 /** The timeline is authored in progress units, so a tween at 0.12 happens at progress 0.12. */
-const END = W.relaxAt;
+const END = GROWTH.fruit[1];
 
 /**
  * Scenes 01 and 02 on one paused GSAP timeline, scrubbed from the shared
@@ -51,6 +51,8 @@ function buildTimeline(rig: Rig) {
     .to([rig.man, rig.woman], { head: 0, duration: 0.02 }, W.stopAt);
   // Camera: a small push in the opening, then a slow push toward the tree with a subtle perspective shift
   tl.to(rig.cam, { dz: -0.6, dy: 0.1, duration: W.liftAt, ease: "none" }, 0).to(rig.cam, { dz: -1.9, dx: 0.9, dy: 0.05, duration: W.relaxAt - W.liftAt, ease: "none" }, W.liftAt);
+  // Scene 03: keep closing in on the tree, rising as it grows, until it fills most of the frame
+  tl.to(rig.cam, { dz: -2.6, dx: 1.85, dy: 0.4, duration: GROWTH.fruit[1] - W.relaxAt, ease: "none" }, W.relaxAt);
   tl.set({}, {}, END); // make the timeline exactly END long
   return tl;
 }
@@ -84,7 +86,8 @@ export function OpeningWorld({ groupRef }: { groupRef: React.RefObject<Group | n
 
   const water = useMemo<WaterRefs>(() => ({ roses: [null, null], group: null }), []);
 
-  useFrame(() => step(tl, rig, camera, progress.get()));
+  // before the people and tree read their poses, so nothing lags a frame behind the timeline
+  useFrame(() => step(tl, rig, camera, progress.get()), -1);
 
   return (
     <group ref={groupRef} visible={false}>
@@ -93,7 +96,7 @@ export function OpeningWorld({ groupRef }: { groupRef: React.RefObject<Group | n
       <group ref={(g) => attachGroup(water, g)} position={WORLD_OFFSET}>
         <Ground />
         <WetSoil />
-        <Tree />
+        <GrowingTree />
         <ContactShadow position={[0, 0, 0]} radius={0.9} />
         <Person style={MAN} pose={rig.man} position={[-1.9, 0, 0.15]} turn={0.45} roseRef={(o) => attachRose(water, 0, o)} />
         <ContactShadow position={[-1.9, 0, 0.15]} radius={0.5} />

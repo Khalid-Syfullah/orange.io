@@ -96,12 +96,13 @@ function driveCamera(camera: PerspectiveCamera, segments: readonly DollySegment[
 export function useDollyTrack(
   segments: readonly DollySegment[],
   progress: MotionValue<number> = sharedProgress,
+  priority = 0,
 ) {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const invalidate = useThree((s) => s.invalidate);
   const pose = useRef<Pose>({ pos: [0, 0, 0], fov: 40, look: [0, 0, 0] });
   useMotionValueEvent(progress, "change", () => invalidate());
-  useFrame(() => driveCamera(camera, segments, progress.get(), pose.current));
+  useFrame(() => driveCamera(camera, segments, progress.get(), pose.current), priority);
 }
 
 const DEFAULT_FROM: Pose = { pos: [0, 0, DOLLY_PUSH.z[0]], fov: DOLLY_PUSH.fov[0], look: [0, 0, 0] };

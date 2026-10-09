@@ -75,7 +75,7 @@ function World() {
 }
 
 function Rig() {
-  useDollyTrack(DEFAULT_DOLLY);
+  useDollyTrack(DEFAULT_DOLLY, undefined, -2); // first: the camera pose is set before anything reads it
   return null;
 }
 
