@@ -162,6 +162,43 @@ export const CHAPTERS = [
   range: readonly [number, number];
 }[];
 
+// ----------------------------------------------------------------- frame ---
+
+/**
+ * Hairline frame states. `hero`: lines in the grid with crosses at the
+ * intersections. `open`: lines retract outward to the screen edges and the
+ * crosses lock into the corners. `closed`: everything exits and hides.
+ */
+export type FrameState = "hero" | "open" | "closed";
+
+/** Scroll length (vh) of a frame transition. Scrubbed by progress, so it reverses. */
+export const FRAME_TRANSITION_VH = 40;
+
+export type FrameSpec = {
+  state: FrameState;
+  /** Open frame only: pull the vertical lines in to these x positions (percent of width). */
+  lock?: { l: number; r: number };
+  /** Start of the transition into this state, in stage vh. Defaults to the scene start. */
+  fromVh?: number;
+};
+
+export const FRAME: Record<SceneName, FrameSpec> = {
+  opening: { state: "hero" },
+  // the hero frame leaves after the first screen of scrolling
+  watering: { state: "open", fromVh: 100 },
+  growth: { state: "open" },
+  ripening: { state: "open" },
+  plucking: { state: "open" },
+  floating: { state: "open" },
+  // the split scene frames the two halves between the vertical lines
+  split: { state: "open", lock: { l: 32, r: 68 } },
+  brand: { state: "closed" },
+};
+
+/** Registration marks pulse (scale 1 to 1.4 to 1) within this many vh of a beat boundary. */
+export const PULSE_VH = 18;
+export const PULSE_SCALE = 1.4;
+
 // ------------------------------------------------------------ validation ---
 
 const EPS = 1e-6;
@@ -220,6 +257,13 @@ export function validateScript(beats: readonly BeatDef[] = BEATS): void {
     const longest = Math.max(0, ...stretches.filter((t) => t.scene === n).map((t) => t.lengthVh));
     if (longest < RULES.travelMin - EPS) problems.push(`scene ${n} has no travel stretch of ${RULES.travelMin}vh (longest ${longest}vh)`);
     if (TRAVEL_MOVES[n].length === 0) problems.push(`scene ${n} lists nothing that moves during travel`);
+  }
+
+  // frame
+  for (const n of SCENE_NAMES) {
+    const f = FRAME[n];
+    if (!f) problems.push(`scene ${n} has no frame state`);
+    else if (f.fromVh !== undefined && f.fromVh > SCENE_START_VH[n]) problems.push(`frame for ${n} starts after the scene does`);
   }
 
   if (problems.length) throw new Error(`Invalid scroll script:\n - ${problems.join("\n - ")}`);

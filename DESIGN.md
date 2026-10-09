@@ -85,3 +85,8 @@ Respect `prefers-reduced-motion`. Split text keeps an `aria-label` with the full
 ## Progress rail (src/components/design/rail.tsx, src/scroll/segments.ts)
 - `SegmentedLine`: SVG segments from `railSegments()` (scene, chapter and beat boundaries; slivers merged), lengths proportional to scroll span, 3px gaps at boundaries, each path carries `data-a` / `data-b`. Fill is `stroke-dashoffset` driven by the progress MotionValue.
 - `ChapterRail` (desktop, below the lower hairline): entries are links with `data-at`, `aria-current="step"`; the active one shows a leading rule and a `SplitReveal` label that swaps on chapter change. `MobileRail`: compact top line plus label; the menu Sheet lists chapters. Clicks use `lenis.scrollTo` with distance-scaled duration and the shared easing.
+
+## Hairline choreography (src/components/design/hairlines.tsx, src/scroll/frame.ts)
+- Parts, each a plain element moved with `motion` transforms and carrying `data-out`: vertical lines `l`, `r`; horizontal lines `u`, `d`; corner crosses `lu`, `ru`, `ld`, `rd`; a filled bar `d`.
+- `FRAME` in the script gives a state per scene: `hero` (grid positions), `open` (lines retract to 12px from the edges, crosses sit in the corners), `closed` (parts exit along `data-out` and fade). `watering` opens after the first screen (100vh), `split` locks the vertical lines at 32% / 68%, `brand` closes. Transitions last `FRAME_TRANSITION_VH` (40vh) and are scrubbed, so they reverse.
+- Crosses pulse 1 to 1.4 to 1 within `PULSE_VH` of every beat boundary (scrubbed too). Reduced motion renders the static hero state only. Mark, menu, rail and pill live in `Chrome` and never move.

@@ -71,3 +71,16 @@ Used by the rail and `lenis.scrollTo`. The active label switches at the start of
 
 ## Dev panel
 In dev builds the overlay draws the script as a horizontal timeline: scenes, chapter anchors, one row per slot, travel stretches (green when 60vh or more), and a playhead. Click it to seek. Keys 1 to 8 jump to scene starts, `h` hides the panel.
+
+## Frame states
+Per-scene hairline frame state (`FRAME` in the script; transition length `FRAME_TRANSITION_VH` = 40vh, scrubbed):
+
+| Scene | State | Notes |
+| --- | --- | --- |
+| opening | hero | lines in the grid, crosses at intersections |
+| watering | open | opens from 100vh (after the first screen), done by 140vh |
+| growth, ripening, plucking, floating | open | lines at the screen edges, crosses in the corners |
+| split | open + lock | vertical lines pulled in to 32% / 68% to frame the two halves |
+| brand | closed | parts exit along `data-out` and fade |
+
+Registration marks pulse (1 to 1.4 to 1) within 18vh of each beat in/out point.
