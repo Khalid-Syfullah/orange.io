@@ -10,6 +10,7 @@ import {
   Scene,
   ShaderMaterial,
   Vector2,
+  Color,
   Vector3,
   WebGLRenderTarget,
   type PerspectiveCamera,
@@ -19,13 +20,15 @@ import {
 import { progress } from "@/lib/progress";
 import { STAGE_VH } from "@/lib/timeline";
 import { dofStrength } from "@/scroll/ripening";
+import { studioMix } from "@/scroll/pluck";
 import type { SceneName } from "@/scroll/script";
 import { DITHER_FRAG, DOF_FRAG, FULLSCREEN_VERT } from "./glsl";
 import { isLiveDissolve, WORLD_SCENES } from "./live";
 import { createPlateUniforms, usePlateUniformUpdater, type PlateUniforms } from "./plate-uniforms";
 import { activeBoundary, transitionMix } from "./transition";
 import { usePlateTextures } from "./plates";
-import { focusTarget } from "./world/opening-world";
+import { WORLD_OFFSET } from "./world/opening-world";
+import { heroLive } from "./world/growing-tree";
 import { currentScene } from "@/lib/timeline";
 
 type DitherMaterial = ShaderMaterial & {
@@ -51,6 +54,8 @@ type DofMaterial = ShaderMaterial & {
     uStrength: { value: number };
     uRadius: { value: number };
     uTexel: { value: Vector2 };
+    uStudio: { value: number };
+    uCream: { value: Color };
   };
 };
 
@@ -109,7 +114,8 @@ function renderFrame(gl: WebGLRenderer, scene: Scene, camera: PerspectiveCamera,
   let a: Texture = rtScene.texture;
   if (dof > 0) {
     camera.getWorldDirection(fwd);
-    toFocus.set(focusTarget.x, focusTarget.y, focusTarget.z).sub(camera.position);
+    // the focus plane follows the held fruit
+    toFocus.set(heroLive.x + WORLD_OFFSET[0], heroLive.y + WORLD_OFFSET[1], heroLive.z + WORLD_OFFSET[2]).sub(camera.position);
     const u = comp.dof.material.uniforms;
     u.uColor.value = rtScene.texture;
     u.uDepth.value = rtScene.depthTexture;
@@ -117,7 +123,9 @@ function renderFrame(gl: WebGLRenderer, scene: Scene, camera: PerspectiveCamera,
     u.uFar.value = camera.far;
     u.uFocus.value = toFocus.dot(fwd); // distance of the selected fruit along the view axis
     u.uStrength.value = dof;
-    u.uRadius.value = 6 * gl.getPixelRatio();
+    const studio = studioMix(p);
+    u.uStudio.value = studio;
+    u.uRadius.value = (6 + 4 * studio) * gl.getPixelRatio();
     u.uTexel.value.set(1 / buf.x, 1 / buf.y);
     gl.setRenderTarget(live ? rtDof : null);
     gl.render(comp.dof.scene, comp.dither.camera);
@@ -177,6 +185,8 @@ export function LiveCompositor() {
         uStrength: { value: 0 },
         uRadius: { value: 6 },
         uTexel: { value: new Vector2(1, 1) },
+        uStudio: { value: 0 },
+        uCream: { value: new Color("#f7f3ea") },
       },
       depthTest: false,
       depthWrite: false,

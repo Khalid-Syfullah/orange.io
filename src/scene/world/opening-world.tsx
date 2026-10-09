@@ -10,6 +10,7 @@ import { ContactShadow, Ground, Lights, Sky } from "./environment";
 import { Person, restPose, type Pose, type PersonStyle } from "./person";
 import { Vector3 } from "three";
 import { GrowingTree, heroFruitPosition } from "./growing-tree";
+import { Hand } from "./hand";
 import { WaterStreams, WetSoil, type WaterRefs } from "./watering-effects";
 import { useInvalidateOn } from "@/scene/webgl";
 
@@ -17,7 +18,7 @@ const MAN: PersonStyle = { kind: "man", height: 1.82, skin: "#d8a37c", hair: "#2
 const WOMAN: PersonStyle = { kind: "woman", height: 1.68, skin: "#e2b08a", hair: "#5a3a28", top: "#f1e6d0", bottom: "#a7845f", shoe: "#4a3a30", canHand: "L", spout: -1 };
 
 /** Where the world sits in the frame: the tree right of centre so the headline owns the left. */
-const WORLD_OFFSET: [number, number, number] = [2.15, -1.5, 0];
+export const WORLD_OFFSET: [number, number, number] = [2.15, -1.5, 0];
 
 type Rig = { man: Pose; woman: Pose; cam: { dx: number; dy: number; dz: number }; focus: { b: number } };
 
@@ -113,6 +114,9 @@ export function OpeningWorld({ groupRef }: { groupRef: React.RefObject<Group | n
   const tl = useMemo(() => buildTimeline(rig), [rig]);
   useEffect(() => () => void tl.kill(), [tl]);
   useInvalidateOn(progress);
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") Object.assign(window, { __cam: camera, __focus: focusTarget });
+  }, [camera]);
 
   const water = useMemo<WaterRefs>(() => ({ roses: [null, null], group: null }), []);
 
@@ -127,6 +131,7 @@ export function OpeningWorld({ groupRef }: { groupRef: React.RefObject<Group | n
         <Ground />
         <WetSoil />
         <GrowingTree />
+        <Hand />
         <ContactShadow position={[0, 0, 0]} radius={0.9} />
         <Person style={MAN} pose={rig.man} position={[-1.9, 0, 0.15]} turn={0.45} roseRef={(o) => attachRose(water, 0, o)} />
         <ContactShadow position={[-1.9, 0, 0.15]} radius={0.5} />

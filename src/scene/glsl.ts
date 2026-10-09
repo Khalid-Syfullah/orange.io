@@ -161,6 +161,8 @@ uniform float uRange;   // distance over which blur reaches its maximum
 uniform float uStrength;
 uniform float uRadius;  // max blur radius in pixels
 uniform vec2 uTexel;
+uniform float uStudio;  // 0..1: the background veils toward clean cream
+uniform vec3 uCream;
 
 float linearDepth(float d) {
   float ndc = d * 2.0 - 1.0;
@@ -185,7 +187,13 @@ void main() {
       wsum += w;
     }
   }
-  gl_FragColor = vec4(acc / wsum, 1.0);
+  vec3 col = acc / wsum;
+  // studio: things far behind the subject (sky, ground, distant leaves) fade into cream;
+  // what is near the focus plane keeps its colour
+  float z = linearDepth(texture2D(uDepth, vUv).x);
+  float far = smoothstep(uFocus + 0.5, uFocus + 4.0, z);
+  col = mix(col, uCream, uStudio * (0.18 + 0.82 * far));
+  gl_FragColor = vec4(col, 1.0);
   #include <colorspace_fragment>
 }
 `;

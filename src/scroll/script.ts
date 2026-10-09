@@ -231,8 +231,8 @@ export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1)
 /** Named positions the fly element (the orange) travels between. x/y are viewport percent. */
 export const FLY_ANCHORS = {
   treeFruit: { x: 62.1, y: 51.6, scale: 1.69, rotate: 0 },
-  hand: { x: 63, y: 52, scale: 0.7, rotate: -24 },
-  center: { x: 64, y: 50, scale: 1.3, rotate: 200 },
+  hand: { x: 67.3, y: 61.7, scale: 1.84, rotate: 0 },
+  center: { x: 64, y: 50, scale: 1.9, rotate: 20 },
 } as const;
 export type FlyAnchor = keyof typeof FLY_ANCHORS;
 
@@ -242,11 +242,8 @@ export type FlyAnchor = keyof typeof FLY_ANCHORS;
  * plucking -> floating dissolve window so the eye follows it across the cut.
  */
 export const FLY_PATH: readonly { vh: number; anchor: FlyAnchor; opacity: number }[] = [
-  { vh: 1340, anchor: "treeFruit", opacity: 0 },
-  { vh: 1344, anchor: "treeFruit", opacity: 1 },
-  { vh: 1420, anchor: "treeFruit", opacity: 1 },
-  { vh: 1500, anchor: "hand", opacity: 1 },
-  { vh: 1587, anchor: "hand", opacity: 1 },
+  { vh: 1586, anchor: "hand", opacity: 0 },
+  { vh: 1590, anchor: "hand", opacity: 1 },
   { vh: 1632, anchor: "center", opacity: 1 },
   { vh: 1875, anchor: "center", opacity: 1 },
   { vh: 1940, anchor: "center", opacity: 0 },
@@ -292,8 +289,21 @@ export const RIPENING = {
 /** The three colours of the ripening, interpolated in OKLab. */
 export const RIPE_COLORS = { green: "#568C43", mid: "#B4A83B", ripe: "#FF8500" } as const;
 
-/** The fly layer takes the selected fruit over when the focus move ends. */
-export const FLY_HANDOVER = RIPENING.focus[1];
+/** The fly layer takes the plucked fruit over when it has left the branch, as the dissolve into the studio begins (vh 1590). */
+export const FLY_HANDOVER = 0.6625;
+
+// --------------------------------------------------------------- pluck ---
+
+/** Scene 05 milestones, as progress. */
+export const PLUCK = {
+  handEnters: 0.58,
+  fingersApproach: 0.6,
+  wraps: 0.62,
+  rotates: 0.64,
+  stemDetaches: 0.65,
+  separates: 0.66,
+  towardCamera: 0.68,
+} as const;
 
 // ------------------------------------------------------------ validation ---
 

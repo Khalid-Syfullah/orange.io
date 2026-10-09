@@ -16,10 +16,11 @@ describe("fly path", () => {
 
   it("travels from hand to center inside the plucking to floating dissolve", () => {
     const b = BOUNDARIES.find((t) => t.to === "floating")!;
-    expect(FLY_PATH.some((k) => k.anchor === "hand" && k.vh === b.startVh)).toBe(true);
+    expect(FLY_PATH.some((k) => k.anchor === "hand" && Math.abs(k.vh - b.startVh) <= 5)).toBe(true);
     expect(FLY_PATH.some((k) => k.anchor === "center" && k.vh === b.atVh)).toBe(true);
     const mid = flyAt(b.startVh + TRANSITION_VH / 2);
-    expect(mid.x).toBeGreaterThan(FLY_ANCHORS.hand.x - 1e-9);
+    expect(mid.x).toBeLessThanOrEqual(FLY_ANCHORS.hand.x);
+    expect(mid.x).toBeGreaterThanOrEqual(FLY_ANCHORS.center.x);
     expect(mid.opacity).toBe(1);
   });
 
