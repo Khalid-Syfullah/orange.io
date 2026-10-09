@@ -3,12 +3,12 @@
 # Usage: orange-deploy <git-ref-or-sha>   (run as the ubuntu user)
 #
 # Builds the ref into a fresh release directory, switches the `current`
-# symlink, restarts the app with pm2, health-checks it, and rolls back to the
-# previous release if the check fails.
+# symlink, restarts the app with pm2, health-checks it, and restores the
+# previous release if anything fails after the switch.
 set -euo pipefail
 
 REPO_URL="https://github.com/Khalid-Syfullah/orange.io.git"
-APP=/var/www/orange
+APP="${ORANGE_APP_DIR:-/var/www/orange}"
 REF="${1:-main}"
 KEEP=5
 export NEXT_TELEMETRY_DISABLED=1
@@ -16,8 +16,36 @@ export NODE_OPTIONS="--max-old-space-size=1536"
 
 cd "$APP"
 REL="$APP/releases/$(date +%Y%m%d%H%M%S)"
-PREV="$(readlink -f current 2>/dev/null || true)"
-trap 'rc=$?; if [ $rc -ne 0 ]; then echo "Deploy failed (exit $rc)"; rm -rf "$REL"; fi' EXIT
+PREV=""
+if [ -L current ]; then PREV="$(readlink -f current)"; fi # empty on the very first deploy
+SWITCHED=0
+
+# Runs on every exit. On failure it restores the previous release if the
+# `current` symlink was already switched, and only then removes the new release.
+on_exit() {
+  local rc=$?
+  trap - EXIT
+  set +e
+  if [ "$rc" -ne 0 ]; then
+    echo "Deploy failed (exit $rc)"
+    if [ "$SWITCHED" -eq 1 ]; then
+      if [ -n "$PREV" ] && [ -d "$PREV" ]; then
+        echo "Restoring previous release: $PREV"
+        ln -sfn "$PREV" "$APP/current.tmp"
+        mv -Tf "$APP/current.tmp" "$APP/current"
+        (cd "$APP" && pm2 startOrReload ecosystem.config.cjs --update-env) \
+          || echo "WARNING: pm2 could not reload the previous release"
+        rm -rf "$REL"
+      else
+        echo "No previous release to restore; keeping $REL"
+      fi
+    else
+      rm -rf "$REL"
+    fi
+  fi
+  exit "$rc"
+}
+trap on_exit EXIT
 
 echo "==> Fetching $REF"
 git init -q "$REL"
@@ -33,6 +61,7 @@ npm ci --no-audit --no-fund --fetch-retries=6 --fetch-retry-mintimeout=15000 --f
 npm run build
 
 echo "==> Activating"
+SWITCHED=1
 ln -sfn "$REL" "$APP/current.tmp"
 mv -Tf "$APP/current.tmp" "$APP/current"
 cd "$APP"
@@ -48,13 +77,8 @@ for _ in $(seq 1 30); do
   sleep 1
 done
 if [ "$ok" -ne 1 ]; then
-  echo "Health check failed (last status $code); rolling back"
-  if [ -n "$PREV" ] && [ -d "$PREV" ]; then
-    ln -sfn "$PREV" "$APP/current.tmp"
-    mv -Tf "$APP/current.tmp" "$APP/current"
-    pm2 startOrReload ecosystem.config.cjs --update-env
-  fi
-  exit 1
+  echo "Health check failed (last status $code)"
+  exit 1 # the EXIT trap restores the previous release
 fi
 
 echo "==> Pruning old releases"
