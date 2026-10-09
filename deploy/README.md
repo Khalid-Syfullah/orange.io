@@ -42,6 +42,13 @@ them to the server; the workflow does not update them.
 3. In GitHub: Settings > Environments > `production`, and restrict deployment
    branches to `main`. The trust policy only accepts that environment.
 
+GitHub now issues the OIDC `sub` claim with immutable owner and repository IDs
+(`repo:Khalid-Syfullah@8851114/orange.io@1411524365:environment:production`),
+so the trust policy lists that form as well as the plain-name form. If the
+credentials step fails with "Not authorized to perform
+sts:AssumeRoleWithWebIdentity", compare the `sub` in the CloudTrail
+`AssumeRoleWithWebIdentity` event with the trust policy.
+
 To use a different role, set the repository variable `AWS_DEPLOY_ROLE_ARN`.
 
 ## Rollback
