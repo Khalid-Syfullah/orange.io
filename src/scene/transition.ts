@@ -1,6 +1,7 @@
 import { useTransform, type MotionValue } from "motion/react";
 import { progress as sharedProgress } from "@/lib/progress";
 import { BOUNDARIES, STAGE_VH, TRANSITION_VH, type Boundary } from "@/scroll/script";
+import { isLiveDissolve } from "./live";
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -15,6 +16,12 @@ export function activeBoundary(vh: number): Boundary | null {
     if (vh > b.startVh && vh < b.atVh) return b;
   }
   return null;
+}
+
+/** Like activeBoundary, but only plate-to-plate dissolves (the live ones are drawn by the scene canvas). */
+export function activePlateBoundary(vh: number): Boundary | null {
+  const b = activeBoundary(vh);
+  return b && !isLiveDissolve(b) ? b : null;
 }
 
 /** Maps progress to `uMix` (0 to 1) for one scene boundary. */

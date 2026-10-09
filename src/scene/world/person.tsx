@@ -2,13 +2,17 @@
 
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import type { Group } from "three";
+import type { Group, Object3D } from "three";
 import { ModelSlot } from "./model-slot";
 import { WateringCan } from "./watering-can";
 
-/** Posture driven from outside (GSAP). All values are small, in radians or 0..1. */
-export type Pose = { turn: number; lean: number; head: number; armL: number; armR: number; breath: number };
-export const restPose = (): Pose => ({ turn: 0, lean: 0, head: 0, armL: 0, armR: 0, breath: 0 });
+/**
+ * Posture, driven from outside (GSAP). Radians unless noted.
+ * sh / el / wr act on the arm that holds the can: shoulder raise, elbow bend,
+ * wrist tilt (the pour). off is a small swing of the free arm.
+ */
+export type Pose = { turn: number; lean: number; head: number; sh: number; el: number; wr: number; off: number; breath: number };
+export const restPose = (): Pose => ({ turn: 0, lean: 0, head: 0, sh: 0, el: 0, wr: 0, off: 0, breath: 0 });
 
 export type PersonStyle = {
   height: number;
@@ -17,24 +21,37 @@ export type PersonStyle = {
   top: string;
   bottom: string;
   shoe: string;
-  /** "dress" draws a skirt over the legs. */
   kind: "man" | "woman";
-  /** Which hand holds the watering can. */
+  /** Which side's arm holds the can. */
   canHand: "L" | "R";
+  /** +1 when the spout points toward +x, -1 toward -x (after the person's own turn). */
+  spout: 1 | -1;
 };
 
-type Refs = { root: Group | null; spine: Group | null; head: Group | null; armL: Group | null; armR: Group | null };
+type Arm = { shoulder: Group | null; elbow: Group | null; wrist: Group | null };
+type Refs = { root: Group | null; spine: Group | null; head: Group | null; L: Arm; R: Arm };
+const newRefs = (): Refs => ({ root: null, spine: null, head: null, L: { shoulder: null, elbow: null, wrist: null }, R: { shoulder: null, elbow: null, wrist: null } });
 
-/** Applies a pose to the rig. Plain function: the rig is mutated by design. */
-function applyPose(r: Refs, pose: Pose, baseTurn: number) {
+/** Applies a pose to the rig by interpolated joint angles. Plain function: the rig is mutated by design. */
+function applyPose(r: Refs, pose: Pose, style: PersonStyle, baseTurn: number) {
   if (r.root) r.root.rotation.y = baseTurn + pose.turn;
   if (r.spine) {
     r.spine.rotation.z = pose.lean;
     r.spine.scale.y = 1 + pose.breath * 0.012;
   }
   if (r.head) r.head.rotation.y = pose.head;
-  if (r.armL) r.armL.rotation.z = 0.06 + pose.armL;
-  if (r.armR) r.armR.rotation.z = -0.06 - pose.armR;
+  for (const side of ["L", "R"] as const) {
+    const a = r[side];
+    const holds = style.canHand === side;
+    const out = side === "L" ? 1 : -1; // free arm drifts slightly outward
+    if (a.shoulder) {
+      a.shoulder.rotation.x = holds ? -pose.sh : pose.off * 0.6;
+      a.shoulder.rotation.z = (side === "L" ? 1 : -1) * (0.06 + (holds ? pose.sh * 0.1 : Math.abs(pose.off) * out * 0.2));
+    }
+    // elbows stay naturally bent a little even at rest
+    if (a.elbow) a.elbow.rotation.x = -(0.12 + (holds ? pose.el : 0));
+    if (a.wrist) a.wrist.rotation.z = holds ? -style.spout * pose.wr : 0;
+  }
 }
 
 function Limb({ r, len, color }: { r: number; len: number; color: string }) {
@@ -48,21 +65,34 @@ function Limb({ r, len, color }: { r: number; len: number; color: string }) {
 
 /**
  * A stylized adult built from capsules and spheres: natural proportions, soft
- * shading, relaxed stance. `pose` is read each frame (set by the GSAP timeline).
+ * shading. The can arm is a shoulder, elbow and wrist chain; the can is parented
+ * to the wrist, so the hand never separates from it. `pose` is read each frame.
  */
-export function Person({ style, pose, position, turn }: { style: PersonStyle; pose: Pose; position: [number, number, number]; turn: number }) {
-  const refs = useRef<Refs>({ root: null, spine: null, head: null, armL: null, armR: null });
-  useFrame(() => applyPose(refs.current, pose, turn));
+export function Person({
+  style,
+  pose,
+  position,
+  turn,
+  roseRef,
+}: {
+  style: PersonStyle;
+  pose: Pose;
+  position: [number, number, number];
+  turn: number;
+  roseRef?: React.Ref<Object3D>;
+}) {
+  const refs = useRef<Refs>(newRefs());
+  useFrame(() => applyPose(refs.current, pose, style, turn));
 
-  const k = style.height / 1.75; // scale from the 1.75m reference
+  const k = style.height / 1.75;
   const woman = style.kind === "woman";
-  const shoulder = woman ? 0.19 : 0.23;
+  const shoulderX = woman ? 0.19 : 0.23;
   const torsoR = woman ? 0.135 : 0.16;
+  const canYaw = style.spout === 1 ? 0 : Math.PI;
 
   return (
     <ModelSlot name={style.kind}>
       <group ref={(g) => void (refs.current.root = g)} position={position} scale={k}>
-        {/* legs */}
         {[-0.085, 0.085].map((x) => (
           <group key={x} position={[x, 0.86, 0]}>
             <Limb r={0.07} len={0.78} color={style.bottom} />
@@ -79,7 +109,6 @@ export function Person({ style, pose, position, turn }: { style: PersonStyle; po
           </mesh>
         ) : null}
 
-        {/* spine: torso, neck, head, arms */}
         <group ref={(g) => void (refs.current.spine = g)} position={[0, 0.9, 0]}>
           <mesh position={[0, 0.27, 0]} scale={[woman ? 1 : 1.12, 1, 0.82]} castShadow>
             <capsuleGeometry args={[torsoR, 0.42, 6, 14]} />
@@ -106,27 +135,25 @@ export function Person({ style, pose, position, turn }: { style: PersonStyle; po
             ) : null}
           </group>
 
-          {/* arms hang from the shoulders; one holds a watering can */}
-          {(["L", "R"] as const).map((side) => {
-            const x = side === "L" ? -shoulder : shoulder;
-            return (
-              <group key={side} ref={(g) => void (refs.current[side === "L" ? "armL" : "armR"] = g)} position={[x, 0.46, 0]}>
-                <Limb r={0.045} len={0.3} color={style.top} />
-                <group position={[0, -0.3, 0]} rotation={[-0.12, 0, 0]}>
-                  <Limb r={0.04} len={0.28} color={style.skin} />
-                  <mesh position={[0, -0.3, 0]} castShadow>
+          {(["L", "R"] as const).map((side) => (
+            <group key={side} ref={(g) => void (refs.current[side].shoulder = g)} position={[side === "L" ? -shoulderX : shoulderX, 0.46, 0]}>
+              <Limb r={0.045} len={0.3} color={style.top} />
+              <group ref={(g) => void (refs.current[side].elbow = g)} position={[0, -0.3, 0]}>
+                <Limb r={0.04} len={0.28} color={style.skin} />
+                <group ref={(g) => void (refs.current[side].wrist = g)} position={[0, -0.29, 0]}>
+                  <mesh castShadow>
                     <sphereGeometry args={[0.042, 10, 8]} />
                     <meshStandardMaterial color={style.skin} roughness={0.7} />
                   </mesh>
                   {style.canHand === side ? (
-                    <group position={[0, -0.34, 0]} rotation={[0, side === "L" ? 0.5 : -0.5, 0]}>
-                      <WateringCan />
+                    <group position={[0, -0.04, 0]} rotation={[0, canYaw, 0]}>
+                      <WateringCan roseRef={roseRef} />
                     </group>
                   ) : null}
                 </group>
               </group>
-            );
-          })}
+            </group>
+          ))}
         </group>
       </group>
     </ModelSlot>

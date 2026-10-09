@@ -76,7 +76,7 @@ type BeatSpec = {
 const BEAT_SPECS: readonly BeatSpec[] = [
   { id: "hero", slot: "hero", scene: "opening", atVh: 2, dwellVh: 56, side: "left", kind: "headline", title: "Great things grow together.", lead: "TODO: hero lead line one. TODO: hero lead line two.", intro: true },
   { id: "plant", slot: "left-line", scene: "watering", atVh: 20, dwellVh: 100, side: "left", kind: "headline", title: "We plant.", lead: "TODO: one line about the seed." },
-  { id: "tend", slot: "left-line", scene: "watering", atVh: 150, dwellVh: 100, side: "left", kind: "headline", title: "We tend.", lead: "TODO: one line about the water." },
+  { id: "tend", slot: "left-line", scene: "watering", atVh: 150, dwellVh: 100, side: "left", kind: "headline", title: "Every idea needs care.", lead: "TODO: one line about the water." },
   { id: "wait", slot: "left-line", scene: "growth", atVh: 25, dwellVh: 110, side: "left", kind: "headline", title: "We wait.", lead: "TODO: one line about patience." },
   { id: "grow", slot: "left-line", scene: "ripening", atVh: 30, dwellVh: 110, side: "left", kind: "headline", title: "We grow.", lead: "TODO: one line about ripening." },
   { id: "pick", slot: "left-line", scene: "plucking", atVh: 25, dwellVh: 100, side: "left", kind: "headline", title: "We pick.", lead: "TODO: one line about the harvest." },
@@ -254,6 +254,18 @@ export const FLY_PATH: readonly { vh: number; anchor: FlyAnchor; opacity: number
 
 /** Slow push-in over the whole stage; each scene gets an eased segment of it (continuous at boundaries). */
 export const DOLLY_PUSH = { z: [10, 7], fov: [40, 34] } as const;
+
+// -------------------------------------------------------------- watering ---
+
+/** Scene 02 milestones, as progress. The rig, the water and the soil all read these. */
+export const WATERING = {
+  liftAt: 0.08, // both people begin lifting their cans
+  tiltAt: 0.12, // both cans tilt
+  flowAt: 0.15, // water leaves the spouts
+  groundAt: 0.17, // water reaches the ground
+  stopAt: 0.2, // the flow gradually stops
+  relaxAt: 0.22, // relaxed posture again
+} as const;
 
 // ------------------------------------------------------------ validation ---
 

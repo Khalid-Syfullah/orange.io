@@ -111,3 +111,10 @@ Respect `prefers-reduced-motion`. Split text keeps an `aria-label` with the full
 - One paused GSAP timeline over the opening scene is scrubbed from `progress` (`tl.progress(sceneProgress("opening", p))`): small camera push, head turns, weight shift, breath. Leaf sway is a function of scroll progress and velocity, never of time, so scrolling back reverses it.
 - The world carries scenes opening and watering, so opening to watering is a continuous dolly (`NO_DISSOLVE`), with no dissolve. Growth onward still shows placeholder plates; the watering to growth dissolve starts from the watering plate until the later scenes are built.
 - The hero headline ("Great things grow together.") is an `intro` beat: it reveals on load with `SplitReveal`, and only its exit is scroll-driven.
+
+## Scene 02, Nurturing Growth (watering)
+- Milestones live in `WATERING` (script.ts): lift 0.08, tilt 0.12, flow 0.15, water reaches the ground 0.17, flow stops 0.20, relaxed 0.22. The beat "Every idea needs care." sits in the pour.
+- Rig: the can arm is a shoulder, elbow and wrist chain; the can is parented to the wrist, so the hand never leaves it. One paused GSAP timeline in progress units drives joint angles (interpolation only).
+- Water (`src/scroll/watering.ts`, `watering-effects.tsx`): 2 streams x 44 droplets in one instanced mesh. Each droplet is a pure function of progress: a parabola from the rose to the tree base (`trajectory`), cycling along its path as you scroll, visible between the stream tail and front, shrinking to nothing on landing, with a splash ring. No simulation state, so it replays in reverse.
+- Soil: a wet decal grows from 0.17 to 0.22 and stays (it carries into later scenes).
+- Camera keeps pushing toward the trunk with a slight sideways shift. `LiveCompositor` renders the world into a target and dithers it into the next scene's frame on the scene canvas (`isLiveDissolve`), so the watering to growth dissolve starts on real pixels. Growth is still a placeholder plate (phase 11 replaces it).

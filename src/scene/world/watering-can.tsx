@@ -1,9 +1,10 @@
 "use client";
 
+import type { Object3D } from "three";
 import { ModelSlot } from "./model-slot";
 
 /** A simple elegant watering can: body, spout with rose, handle. Hangs from its handle at the origin. */
-export function WateringCan() {
+export function WateringCan({ roseRef }: { roseRef?: React.Ref<Object3D> }) {
   return (
     <ModelSlot name="wateringCan">
       <group position={[0, -0.14, 0]} scale={0.9}>
@@ -20,6 +21,8 @@ export function WateringCan() {
           <cylinderGeometry args={[0.035, 0.02, 0.04, 14]} />
           <meshStandardMaterial color="#a8946f" roughness={0.5} metalness={0.4} />
         </mesh>
+        {/* where the water leaves: the centre of the rose */}
+        <object3D ref={roseRef} position={[0.275, 0.115, 0]} />
         {/* handle */}
         <mesh position={[-0.02, 0.15, 0]} rotation={[0, 0, 0]} castShadow>
           <torusGeometry args={[0.09, 0.011, 8, 24, Math.PI]} />

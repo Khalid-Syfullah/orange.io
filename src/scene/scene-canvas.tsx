@@ -9,6 +9,8 @@ import { currentScene } from "@/lib/timeline";
 import { DOLLY_PUSH, type SceneName } from "@/scroll/script";
 import { DEFAULT_DOLLY, useDollyTrack } from "./dolly";
 import { OpeningWorld } from "./world/opening-world";
+import { LiveCompositor } from "./live-compositor";
+import { WORLD_SCENES } from "./live";
 import type { Group, Mesh } from "three";
 import { FULLSCREEN_VERT, PLATE_FRAG } from "./glsl";
 import { usePlateTextures } from "./plates";
@@ -16,9 +18,6 @@ import { createPlateUniforms, usePlateUniformUpdater, type PlateUniforms } from 
 import { DPR, useInvalidateOn } from "./webgl";
 
 type PlateMaterial = ShaderMaterial & { uniforms: { uTex: { value: Texture | null } } & PlateUniforms };
-
-/** Scenes drawn by the live 3D world. Later scenes still show placeholder plates. */
-const WORLD_SCENES: readonly SceneName[] = ["opening", "watering"];
 
 /** Per-frame step (plain function so the render-purity lint does not apply). */
 function stepPlate(m: PlateMaterial, shown: { scene: SceneName | null }, textures: Record<SceneName, Texture>, p: number, apply: (p: number) => void, quad: Mesh | null, world: Group | null) {
@@ -97,6 +96,7 @@ export function SceneCanvas() {
       >
         <Rig />
         <World />
+        <LiveCompositor />
       </Canvas>
     </div>
   );

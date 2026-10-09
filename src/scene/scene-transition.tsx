@@ -11,7 +11,7 @@ import type { SceneName } from "@/scroll/script";
 import { DITHER_FRAG, FULLSCREEN_VERT } from "./glsl";
 import { usePlateTextures } from "./plates";
 import { createPlateUniforms, usePlateUniformUpdater, type PlateUniforms } from "./plate-uniforms";
-import { activeBoundary, transitionMix } from "./transition";
+import { activePlateBoundary, transitionMix } from "./transition";
 import { DPR, useInvalidateOn } from "./webgl";
 
 /** Dither cell size in CSS pixels (1 to 4). */
@@ -24,7 +24,7 @@ type DissolveMaterial = ShaderMaterial & {
 /** Per-frame step; returns early (does no work) while no dissolve window is running. */
 function stepDissolve(m: DissolveMaterial, textures: Record<SceneName, Texture>, p: number, dpr: number, apply: (p: number) => void) {
   const vh = p * STAGE_VH;
-  const b = activeBoundary(vh);
+  const b = activePlateBoundary(vh);
   if (!b) return;
   const u = m.uniforms;
   u.uTexA.value = textures[b.from];
@@ -47,6 +47,8 @@ function Dissolve({ direction }: { direction: 1 | -1 }) {
           uMix: { value: 0 },
           uDirection: { value: direction },
           uPixelSize: { value: PIXEL_SIZE_CSS },
+          uAScreen: { value: 0 },
+          uBScreen: { value: 0 },
           ...createPlateUniforms(),
         },
         depthTest: false,
@@ -56,7 +58,7 @@ function Dissolve({ direction }: { direction: 1 | -1 }) {
   );
   const apply = usePlateUniformUpdater(material.uniforms);
   // only while a dissolve window is running; otherwise the layer is hidden and idle
-  const running = () => activeBoundary(progress.get() * STAGE_VH) !== null;
+  const running = () => activePlateBoundary(progress.get() * STAGE_VH) !== null;
   useInvalidateOn(progress, running);
   useInvalidateOn(velocityNorm, running);
   useInvalidateOn(sheen, running);
@@ -79,7 +81,7 @@ function Dissolve({ direction }: { direction: 1 | -1 }) {
  * Textures are the placeholder plates; real scenes will pass render targets.
  */
 export function SceneTransition({ direction = 1 }: { direction?: 1 | -1 }) {
-  const visible = useTransform(progress, (p) => (activeBoundary(p * STAGE_VH) ? "visible" : "hidden"));
+  const visible = useTransform(progress, (p) => (activePlateBoundary(p * STAGE_VH) ? "visible" : "hidden"));
   return (
     <motion.div className="pointer-events-none absolute inset-0" data-layer="transition" style={{ visibility: visible }} aria-hidden="true">
       <Canvas frameloop="demand" dpr={DPR} flat gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}>

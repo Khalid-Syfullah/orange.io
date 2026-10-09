@@ -71,6 +71,8 @@ uniform sampler2D uTexB;
 uniform float uMix;
 uniform float uDirection;
 uniform float uPixelSize;
+uniform float uAScreen; // 1: texture A is already a screen-space frame (a render target)
+uniform float uBScreen;
 ${PLATE_UV}
 
 float bayer2(vec2 a) { a = floor(a); return fract(a.x * 0.5 + a.y * a.y * 0.75); }
@@ -86,8 +88,8 @@ void main() {
   float sweep = uDirection > 0.0 ? 1.0 - vUv.y : vUv.y;
   sweep = clamp(sweep + (hash(cell) - 0.5) * 0.08, 0.0, 1.0);
   float m = clamp((uMix * (1.0 + SOFT) - sweep) / SOFT, 0.0, 1.0);
-  vec3 a = samplePlate(uTexA, vUv);
-  vec3 b = samplePlate(uTexB, vUv);
+  vec3 a = uAScreen > 0.5 ? texture2D(uTexA, vUv).rgb : samplePlate(uTexA, vUv);
+  vec3 b = uBScreen > 0.5 ? texture2D(uTexB, vUv).rgb : samplePlate(uTexB, vUv);
   gl_FragColor = vec4(applySheen(t < m ? b : a, vUv), 1.0);
   #include <colorspace_fragment>
 }
