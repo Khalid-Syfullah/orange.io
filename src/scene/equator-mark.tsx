@@ -3,6 +3,7 @@
 import { motion, useTransform } from "motion/react";
 import { RegistrationMark } from "@/components/design/registration-mark";
 import { progress } from "@/lib/progress";
+import { SPLIT } from "@/scroll/script";
 import { studioScreen } from "@/scroll/studio";
 
 /**
@@ -12,7 +13,11 @@ import { studioScreen } from "@/scroll/studio";
  */
 export function EquatorMark() {
   const left = useTransform(progress, (p) => `calc(50vw + ${studioScreen(p).radiusVh}vh)`);
-  const mark = useTransform(progress, (p) => studioScreen(p).mark);
+  // it announces the cut, then gives way as the separation line opens
+  const mark = useTransform(progress, (p) => {
+    const fade = Math.min(1, Math.max(0, (p - SPLIT.line[0]) / (SPLIT.split[0] - SPLIT.line[0])));
+    return studioScreen(p).mark * (1 - fade);
+  });
   const scale = useTransform(mark, [0, 1], [0.2, 1]);
   const visibility = useTransform(mark, (m) => (m > 0.001 ? "visible" : "hidden"));
   return (

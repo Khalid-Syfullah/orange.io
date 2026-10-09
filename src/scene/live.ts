@@ -10,7 +10,7 @@ export const SCENE_GROUP: Record<SceneName, SceneGroup> = {
   ripening: "world",
   plucking: "world",
   floating: "studio",
-  split: "plate",
+  split: "studio",
   brand: "plate",
 };
 

@@ -33,8 +33,8 @@ describe("fly path", () => {
 
 describe("transitions", () => {
   it("dissolves every scene change except into the live world scenes, ending at the scene start", () => {
-    expect(BOUNDARIES).toHaveLength(3);
-    expect(BOUNDARIES.some((t) => ["watering", "growth", "ripening", "plucking"].includes(t.to))).toBe(false);
+    expect(BOUNDARIES).toHaveLength(2);
+    expect(BOUNDARIES.some((t) => ["watering", "growth", "ripening", "plucking", "split"].includes(t.to))).toBe(false);
     expect(BOUNDARIES[0].atVh).toBe(SCENE_START_VH.floating);
   });
 

@@ -28,4 +28,5 @@ export function showGroup(scene: Scene, g: SceneGroup) {
   scene.background = g === "world" ? r.worldBackground : g === "studio" ? r.studioBackground : null;
   scene.fog = g === "world" ? r.worldFog : null;
   scene.environment = g === "studio" ? r.studioEnvironment : null;
+  scene.environmentIntensity = 0.2; // the room reflections are a garnish, not the lighting
 }

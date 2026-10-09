@@ -70,7 +70,9 @@
 
   /* shadcn theme mapped to the palette (light theme only) */
   --background: var(--cream);
-  --foreground: var(--ink);
+  /* --press-mix goes 0 to 1 as the studio deepens to --press; text and hairlines follow */
+  --press-mix: 0;
+  --foreground: color-mix(in srgb, var(--cream) calc(var(--press-mix) * 100%), var(--ink));
   --card: var(--cream);
   --card-foreground: var(--ink);
   --popover: var(--cream);

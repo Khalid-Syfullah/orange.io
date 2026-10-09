@@ -51,7 +51,7 @@ export const RULES = {
 // ----------------------------------------------------------------- beats ---
 
 export type Slot = "hero" | "left-line" | "right-card";
-export type BeatSide = "left" | "left-narrow" | "right" | "center";
+export type BeatSide = "left" | "left-narrow" | "top-left" | "right" | "center";
 
 type BeatSpec = {
   id: string;
@@ -81,7 +81,7 @@ const BEAT_SPECS: readonly BeatSpec[] = [
   { id: "grow", slot: "left-line", scene: "ripening", atVh: 30, dwellVh: 110, side: "left", kind: "headline", title: "Every effort bears fruit.", lead: "TODO: one line about ripening." },
   { id: "pick", slot: "left-line", scene: "plucking", atVh: 25, dwellVh: 100, side: "left", kind: "headline", title: "We pick.", lead: "TODO: one line about the harvest." },
   { id: "floating-card", slot: "left-line", scene: "floating", atVh: 40, dwellVh: 120, side: "left-narrow", kind: "headline", title: "Nature reveals its best.", lead: "TODO: one line about the fruit." },
-  { id: "inside", slot: "left-line", scene: "split", atVh: 30, dwellVh: 120, side: "left", kind: "headline", title: "There is more inside.", lead: "TODO: one line about what is inside." },
+  { id: "inside", slot: "left-line", scene: "split", atVh: 120, dwellVh: 120, side: "top-left", kind: "headline", title: "There\u2019s more inside.", lead: "TODO: one line about what is inside." },
   { id: "brand", slot: "hero", scene: "brand", atVh: 62, dwellVh: 106, side: "center", kind: "headline", title: "Orange.io", lead: "TODO: brand reveal line.", holdToEnd: true },
 ];
 
@@ -215,7 +215,7 @@ export const TRANSITION_VH = 45;
 export type Boundary = { index: number; from: SceneName; to: SceneName; atVh: number; startVh: number };
 
 /** Scenes entered by a slow camera dolly instead of a dissolve (the world simply continues). */
-export const NO_DISSOLVE: readonly SceneName[] = ["watering", "growth", "ripening", "plucking"];
+export const NO_DISSOLVE: readonly SceneName[] = ["watering", "growth", "ripening", "plucking", "split"];
 
 /** One boundary per dissolved scene change: watering->growth, growth->ripening, ... */
 export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1)
@@ -315,6 +315,17 @@ export const STUDIO = {
   grow: [0.77, 0.8], // it grows a little
   mark: [0.78, 0.8], // a single registration mark appears on its equator
 } as const;
+
+// --------------------------------------------------------------- split ---
+
+/** Scene 07 windows, as progress. The two halves replace the whole orange at 0.80 (same pixels). */
+export const SPLIT = {
+  stop: [0.8, 0.83], // the rotation winds down into the cutting orientation
+  line: [0.83, 0.85], // a thin separation line opens
+  split: [0.85, 0.88], // the halves begin to part
+  apart: [0.88, 0.91], // they move apart, turning outward
+  faces: [0.91, 0.93], // the cut faces are fully shown; the camera pulls back and the studio deepens to --press
+} as const satisfies Record<string, readonly [number, number]>;
 
 // ------------------------------------------------------------ validation ---
 
