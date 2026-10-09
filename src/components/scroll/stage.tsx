@@ -96,7 +96,7 @@ export function Stage() {
         <PointerLayer depth={0.2}>
         <div data-layer="text" className="absolute inset-0">
           {BEATS.map((b) => (
-            <Beat key={b.id} at={b.at} out={b.out} side={b.side}>
+            <Beat key={b.id} at={b.at} out={b.out} side={b.side} intro={b.intro}>
               {b.kind === "card" ? (
                 <BeatCard tag={b.tag} title={b.title}>
                   {b.lead}

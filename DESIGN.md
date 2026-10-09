@@ -104,3 +104,10 @@ Respect `prefers-reduced-motion`. Split text keeps an `aria-label` with the full
 - Velocity: vertical smear at the screen edges (max 1% uv), 3% scale breath on the plate and the fly orange, faster cloud drift. All zero at rest.
 - Pointer parallax: `PointerLayer` shifts by at most 6px x depth (scene 0.4, clouds 0.7, fly 1, text 0.2); hairlines stay fixed.
 - Sheen and parallax run only with a fine hovering pointer and without reduced motion. The decay loop runs only while the sheen is active and stops when the tab is hidden. `HoverRoll` (with a screen-reader text) is used in pill buttons and the chapter list.
+
+## Scene 01, The Beginning (src/scene/world)
+- Procedural, behind `src/scene/models.ts` slots (`tree`, `man`, `woman`, `wateringCan`); set a `url` and `ModelSlot` renders the GLB via drei `<Gltf>` instead.
+- `OpeningWorld`: sky (apricot to a cream horizon at eye level) with fog, warm low sun with soft shadows, ground with grass, a young tree (slender trunk, six branches, a modest crown, no fruit), the man left and the woman right, each holding a watering can, contact-shadow decals. Camera is a 35mm-equivalent (40 degree vertical FOV) pushed in along the default dolly.
+- One paused GSAP timeline over the opening scene is scrubbed from `progress` (`tl.progress(sceneProgress("opening", p))`): small camera push, head turns, weight shift, breath. Leaf sway is a function of scroll progress and velocity, never of time, so scrolling back reverses it.
+- The world carries scenes opening and watering, so opening to watering is a continuous dolly (`NO_DISSOLVE`), with no dissolve. Growth onward still shows placeholder plates; the watering to growth dissolve starts from the watering plate until the later scenes are built.
+- The hero headline ("Great things grow together.") is an `intro` beat: it reveals on load with `SplitReveal`, and only its exit is scroll-driven.

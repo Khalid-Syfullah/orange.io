@@ -86,11 +86,10 @@ Per-scene hairline frame state (`FRAME` in the script; transition length `FRAME_
 Registration marks pulse (1 to 1.4 to 1) within 18vh of each beat in/out point.
 
 ## Dissolve windows
-Each scene change dissolves over the 45vh before the scene starts (`TRANSITION_VH`), so the new scene is fully resolved exactly at its start. `validateScript()` rejects any beat that overlaps a window.
+Each scene change dissolves (except opening to watering, which is a slow camera dolly with no dissolve) over the 45vh before the scene starts (`TRANSITION_VH`), so the new scene is fully resolved exactly at its start. `validateScript()` rejects any beat that overlaps a window.
 
 | Boundary | Window (vh) |
 | --- | --- |
-| opening to watering | 147 to 192 |
 | watering to growth | 483 to 528 |
 | growth to ripening | 963 to 1008 |
 | ripening to plucking | 1299 to 1344 |

@@ -31,9 +31,10 @@ describe("fly path", () => {
 });
 
 describe("transitions", () => {
-  it("has one boundary per scene change, ending at the scene start", () => {
-    expect(BOUNDARIES).toHaveLength(7);
-    expect(BOUNDARIES[0].atVh).toBe(SCENE_START_VH.watering);
+  it("dissolves every scene change except into watering, ending at the scene start", () => {
+    expect(BOUNDARIES).toHaveLength(6);
+    expect(BOUNDARIES.some((t) => t.to === "watering")).toBe(false);
+    expect(BOUNDARIES[0].atVh).toBe(SCENE_START_VH.growth);
   });
 
   it("keeps dissolve windows off beats (validateScript)", () => {

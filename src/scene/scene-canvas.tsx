@@ -8,6 +8,8 @@ import { sheen, sheenX, sheenY } from "@/lib/reactions";
 import { currentScene } from "@/lib/timeline";
 import { DOLLY_PUSH, type SceneName } from "@/scroll/script";
 import { DEFAULT_DOLLY, useDollyTrack } from "./dolly";
+import { OpeningWorld } from "./world/opening-world";
+import type { Group, Mesh } from "three";
 import { FULLSCREEN_VERT, PLATE_FRAG } from "./glsl";
 import { usePlateTextures } from "./plates";
 import { createPlateUniforms, usePlateUniformUpdater, type PlateUniforms } from "./plate-uniforms";
@@ -15,9 +17,15 @@ import { DPR, useInvalidateOn } from "./webgl";
 
 type PlateMaterial = ShaderMaterial & { uniforms: { uTex: { value: Texture | null } } & PlateUniforms };
 
+/** Scenes drawn by the live 3D world. Later scenes still show placeholder plates. */
+const WORLD_SCENES: readonly SceneName[] = ["opening", "watering"];
+
 /** Per-frame step (plain function so the render-purity lint does not apply). */
-function stepPlate(m: PlateMaterial, shown: { scene: SceneName | null }, textures: Record<SceneName, Texture>, p: number, apply: (p: number) => void) {
+function stepPlate(m: PlateMaterial, shown: { scene: SceneName | null }, textures: Record<SceneName, Texture>, p: number, apply: (p: number) => void, quad: Mesh | null, world: Group | null) {
   const scene = currentScene(p);
+  const live = WORLD_SCENES.includes(scene);
+  if (quad) quad.visible = !live;
+  if (world) world.visible = live;
   if (shown.scene !== scene) {
     shown.scene = scene;
     m.uniforms.uTex.value = textures[scene];
@@ -25,7 +33,8 @@ function stepPlate(m: PlateMaterial, shown: { scene: SceneName | null }, texture
   apply(p);
 }
 
-function PlateQuad() {
+function PlateQuad({ world }: { world: React.RefObject<Group | null> }) {
+  const quad = useRef<Mesh>(null);
   const textures = usePlateTextures();
   const shown = useRef<{ scene: SceneName | null }>({ scene: null });
   const material = useMemo(
@@ -46,13 +55,23 @@ function PlateQuad() {
   useInvalidateOn(sheenX, () => sheen.get() > 0);
   useInvalidateOn(sheenY, () => sheen.get() > 0);
 
-  useFrame(() => stepPlate(material, shown.current, textures, progress.get(), apply));
+  useFrame(() => stepPlate(material, shown.current, textures, progress.get(), apply, quad.current, world.current));
 
   return (
-    <mesh frustumCulled={false}>
+    <mesh ref={quad} frustumCulled={false}>
       <planeGeometry args={[2, 2]} />
       <primitive object={material} attach="material" />
     </mesh>
+  );
+}
+
+function World() {
+  const world = useRef<Group>(null);
+  return (
+    <>
+      <PlateQuad world={world} />
+      <OpeningWorld groupRef={world} />
+    </>
   );
 }
 
@@ -72,11 +91,12 @@ export function SceneCanvas() {
         frameloop="demand"
         dpr={DPR}
         flat
+        shadows
         gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
         camera={{ position: [0, 0, DOLLY_PUSH.z[0]], fov: DOLLY_PUSH.fov[0], near: 0.1, far: 100 }}
       >
         <Rig />
-        <PlateQuad />
+        <World />
       </Canvas>
     </div>
   );

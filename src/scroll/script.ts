@@ -68,11 +68,13 @@ type BeatSpec = {
   lead: string;
   /** Final beat: stays visible to the end of the stage. */
   holdToEnd?: boolean;
+  /** Opening beat: reveals on load (progress 0) rather than from scroll. */
+  intro?: boolean;
 };
 
 // TODO(copy): all text is placeholder.
 const BEAT_SPECS: readonly BeatSpec[] = [
-  { id: "hero", slot: "hero", scene: "opening", atVh: 2, dwellVh: 56, side: "left", kind: "headline", title: "Grown slowly, on purpose.", lead: "TODO: hero lead line one. TODO: hero lead line two." },
+  { id: "hero", slot: "hero", scene: "opening", atVh: 2, dwellVh: 56, side: "left", kind: "headline", title: "Great things grow together.", lead: "TODO: hero lead line one. TODO: hero lead line two.", intro: true },
   { id: "plant", slot: "left-line", scene: "watering", atVh: 20, dwellVh: 100, side: "left", kind: "headline", title: "We plant.", lead: "TODO: one line about the seed." },
   { id: "tend", slot: "left-line", scene: "watering", atVh: 150, dwellVh: 100, side: "left", kind: "headline", title: "We tend.", lead: "TODO: one line about the water." },
   { id: "wait", slot: "left-line", scene: "growth", atVh: 25, dwellVh: 110, side: "left", kind: "headline", title: "We wait.", lead: "TODO: one line about patience." },
@@ -211,14 +213,20 @@ export const TRANSITION_VH = 45;
 
 export type Boundary = { index: number; from: SceneName; to: SceneName; atVh: number; startVh: number };
 
-/** One boundary per scene change: opening->watering, watering->growth, ... */
-export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1).map((to, i) => ({
-  index: i,
-  from: SCENE_NAMES[i],
-  to,
-  atVh: SCENE_START_VH[to],
-  startVh: SCENE_START_VH[to] - TRANSITION_VH,
-}));
+/** Scenes entered by a slow camera dolly instead of a dissolve (the world simply continues). */
+export const NO_DISSOLVE: readonly SceneName[] = ["watering"];
+
+/** One boundary per dissolved scene change: watering->growth, growth->ripening, ... */
+export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1)
+  .map((to, i) => ({ to, from: SCENE_NAMES[i] }))
+  .filter((b) => !NO_DISSOLVE.includes(b.to))
+  .map((b, index) => ({
+    index,
+    from: b.from,
+    to: b.to,
+    atVh: SCENE_START_VH[b.to],
+    startVh: SCENE_START_VH[b.to] - TRANSITION_VH,
+  }));
 
 /** Named positions the fly element (the orange) travels between. x/y are viewport percent. */
 export const FLY_ANCHORS = {
