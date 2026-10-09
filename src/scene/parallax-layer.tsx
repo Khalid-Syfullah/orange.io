@@ -2,6 +2,8 @@
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useMemo } from "react";
+import { motion, useTransform } from "motion/react";
+import { STUDIO } from "@/scroll/script";
 import { Color, InstancedBufferAttribute, PlaneGeometry, ShaderMaterial } from "three";
 import { progress, velocityNorm } from "@/lib/progress";
 import { cloudPhase } from "@/scroll/clouds";
@@ -87,11 +89,14 @@ function Clouds() {
  * instanced mesh, one draw call, renders on demand.
  */
 export function ParallaxLayer() {
+  // the clouds clear away as the scene becomes the clean cream studio
+  const opacity = useTransform(progress, [STUDIO.start - 0.019, STUDIO.start], [1, 0]);
+  const visibility = useTransform(opacity, (o) => (o > 0.001 ? "visible" : "hidden"));
   return (
-    <div className="pointer-events-none absolute inset-0" data-layer="parallax" aria-hidden="true">
+    <motion.div className="pointer-events-none absolute inset-0" data-layer="parallax" aria-hidden="true" style={{ opacity, visibility }}>
       <Canvas frameloop="demand" dpr={DPR} flat gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}>
         <Clouds />
       </Canvas>
-    </div>
+    </motion.div>
   );
 }

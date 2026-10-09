@@ -12,6 +12,7 @@ import { PointerReactions } from "./pointer-reactions";
 import { SceneCanvas } from "@/scene/scene-canvas";
 import { SceneTransition } from "@/scene/scene-transition";
 import { FlyLayer } from "@/scene/fly-layer";
+import { EquatorMark } from "@/scene/equator-mark";
 import { ParallaxLayer } from "@/scene/parallax-layer";
 import { WebGLBoundary } from "@/scene/webgl";
 
@@ -91,6 +92,9 @@ export function Stage() {
           <WebGLBoundary>
             <ParallaxLayer />
           </WebGLBoundary>
+        </PointerLayer>
+        <PointerLayer depth={1}>
+          <EquatorMark />
         </PointerLayer>
         <Hairlines />
         <PointerLayer depth={0.2}>

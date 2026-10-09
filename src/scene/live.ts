@@ -1,13 +1,29 @@
 import type { Boundary, SceneName } from "@/scroll/script";
 
-/** Scenes drawn by the live 3D world. Later scenes still show placeholder plates. */
-export const WORLD_SCENES: readonly SceneName[] = ["opening", "watering", "growth", "ripening", "plucking"];
+/** Which live 3D group draws each scene. Scenes with no group still show placeholder plates. */
+export type SceneGroup = "world" | "studio" | "plate";
+
+export const SCENE_GROUP: Record<SceneName, SceneGroup> = {
+  opening: "world",
+  watering: "world",
+  growth: "world",
+  ripening: "world",
+  plucking: "world",
+  floating: "studio",
+  split: "plate",
+  brand: "plate",
+};
+
+export const groupOf = (s: SceneName): SceneGroup => SCENE_GROUP[s];
+
+/** Scenes drawn by the orchard world (kept for callers that only care about the world). */
+export const WORLD_SCENES: readonly SceneName[] = (Object.keys(SCENE_GROUP) as SceneName[]).filter((s) => SCENE_GROUP[s] === "world");
 
 /**
  * A dissolve out of a live scene is composited inside the scene canvas, because
- * its "from" frame is the 3D world (rendered to a target there). Plate-to-plate
- * dissolves stay in the separate transition canvas.
+ * its "from" frame is a 3D group rendered there. Plate-to-plate dissolves stay
+ * in the separate transition canvas.
  */
 export function isLiveDissolve(b: Boundary): boolean {
-  return WORLD_SCENES.includes(b.from);
+  return SCENE_GROUP[b.from] !== "plate";
 }

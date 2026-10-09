@@ -12,6 +12,8 @@ const BeatCtx = createContext<{ at: number; out: number; intro: boolean }>({ at:
 
 const SIDE_CLASS: Record<BeatSide, string> = {
   left: "left-[8%] right-[8%] md:right-auto md:w-[min(40vw,36rem)]",
+  // narrower, so the headline never reaches a centred subject
+  "left-narrow": "left-[8%] right-[8%] md:right-auto md:w-[min(30vw,27rem)]",
   right: "left-[8%] right-[8%] md:left-[62%] md:right-auto md:w-[min(28vw,26rem)]",
   center: "left-[8%] right-[8%] text-center md:left-1/2 md:right-auto md:w-[min(60vw,48rem)] md:-translate-x-1/2",
 };

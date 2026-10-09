@@ -1,30 +1,27 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { useThree } from "@react-three/fiber";
-import { CanvasTexture, Color, Fog, InstancedMesh, Object3D, SRGBColorSpace, type Scene } from "three";
+import { CanvasTexture, Color, Fog, InstancedMesh, Object3D, SRGBColorSpace } from "three";
+import { registry } from "@/scene/registry";
 import { useRef } from "react";
 import { mulberry32 } from "./rng";
 
 const CREAM = "#f7f3ea";
 const APRICOT = "#ffd9a8";
 
-/** Installs the sky and fog on the scene; returns the cleanup. Plain function (mutates the scene by design). */
-function setBackdrop(scene: Scene, tex: CanvasTexture) {
-  const prevBg = scene.background;
-  const prevFog = scene.fog;
-  scene.background = tex;
-  scene.fog = new Fog(new Color(CREAM), 13, 30);
+/** Registers the sky and fog with the scene registry (the compositor installs them when the world is drawn). */
+function registerBackdrop(tex: CanvasTexture) {
+  registry.worldBackground = tex;
+  registry.worldFog = new Fog(new Color(CREAM), 13, 30);
   return () => {
-    scene.background = prevBg;
-    scene.fog = prevFog;
+    registry.worldBackground = null;
+    registry.worldFog = null;
     tex.dispose();
   };
 }
 
 /** Sky + fog: warm apricot at the top easing into a clean cream horizon at eye level. */
 export function Sky() {
-  const scene = useThree((s) => s.scene);
   const tex = useMemo(() => {
     const c = document.createElement("canvas");
     c.width = 4;
@@ -41,7 +38,7 @@ export function Sky() {
     t.colorSpace = SRGBColorSpace;
     return t;
   }, []);
-  useEffect(() => setBackdrop(scene, tex), [scene, tex]);
+  useEffect(() => registerBackdrop(tex), [tex]);
   return null;
 }
 

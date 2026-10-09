@@ -23,7 +23,8 @@ import { dofStrength } from "@/scroll/ripening";
 import { studioMix } from "@/scroll/pluck";
 import type { SceneName } from "@/scroll/script";
 import { DITHER_FRAG, DOF_FRAG, FULLSCREEN_VERT } from "./glsl";
-import { isLiveDissolve, WORLD_SCENES } from "./live";
+import { groupOf, isLiveDissolve } from "./live";
+import { registry, showGroup } from "./registry";
 import { createPlateUniforms, usePlateUniformUpdater, type PlateUniforms } from "./plate-uniforms";
 import { activeBoundary, transitionMix } from "./transition";
 import { usePlateTextures } from "./plates";
@@ -62,6 +63,7 @@ type DofMaterial = ShaderMaterial & {
 type Comp = {
   rtScene: WebGLRenderTarget | null; // world colour + depth
   rtDof: WebGLRenderTarget | null; // world after depth of field (used when dissolving)
+  rtB: WebGLRenderTarget | null; // the incoming live scene during a dissolve
   dither: { scene: Scene; camera: OrthographicCamera; material: DitherMaterial };
   dof: { scene: Scene; material: DofMaterial };
   size: Vector2;
@@ -84,8 +86,10 @@ function ensureTargets(comp: Comp, w: number, h: number) {
   if (comp.rtScene && comp.size.x === w && comp.size.y === h) return;
   comp.rtScene?.dispose();
   comp.rtDof?.dispose();
+  comp.rtB?.dispose();
   comp.rtScene = new WebGLRenderTarget(w, h, { depthTexture: new DepthTexture(w, h) });
   comp.rtDof = new WebGLRenderTarget(w, h);
+  comp.rtB = new WebGLRenderTarget(w, h);
   comp.size.set(w, h);
 }
 
@@ -99,18 +103,24 @@ function renderFrame(gl: WebGLRenderer, scene: Scene, camera: PerspectiveCamera,
   const vh = p * STAGE_VH;
   const b = activeBoundary(vh);
   const live = !!b && isLiveDissolve(b);
-  const dof = WORLD_SCENES.includes(currentScene(p)) ? dofStrength(p) : 0;
+  const cur = groupOf(currentScene(p));
+  const camFor = (g: ReturnType<typeof groupOf>) => (g === "studio" ? registry.studioCamera : camera);
+  const dof = cur === "world" ? dofStrength(p) : 0;
   if (!live && dof <= 0) {
-    gl.render(scene, camera);
+    showGroup(scene, cur);
+    gl.render(scene, camFor(cur));
     return;
   }
   gl.getDrawingBufferSize(buf);
   ensureTargets(comp, buf.x, buf.y);
   const rtScene = comp.rtScene!;
   const rtDof = comp.rtDof!;
-  gl.setRenderTarget(rtScene);
-  gl.render(scene, camera);
+  const rtB = comp.rtB!;
 
+  // frame A: the current live scene (the world, softened by depth of field when it is active)
+  showGroup(scene, cur);
+  gl.setRenderTarget(rtScene);
+  gl.render(scene, camFor(cur));
   let a: Texture = rtScene.texture;
   if (dof > 0) {
     camera.getWorldDirection(fwd);
@@ -133,15 +143,24 @@ function renderFrame(gl: WebGLRenderer, scene: Scene, camera: PerspectiveCamera,
   }
   if (!live) {
     gl.setRenderTarget(null);
-    if (dof <= 0) gl.render(comp.dither.scene, comp.dither.camera); // not reached: plain path above
     return;
+  }
+
+  // frame B: the next scene, live (rendered with its own camera) or a placeholder plate
+  const toGroup = groupOf(b!.to);
+  let bTex: Texture = textures[b!.to];
+  if (toGroup !== "plate") {
+    showGroup(scene, toGroup);
+    gl.setRenderTarget(rtB);
+    gl.render(scene, camFor(toGroup));
+    bTex = rtB.texture;
   }
   gl.setRenderTarget(null);
   const d = comp.dither.material.uniforms;
   d.uTexA.value = a;
   d.uAScreen.value = 1;
-  d.uTexB.value = textures[b!.to];
-  d.uBScreen.value = 0;
+  d.uTexB.value = bTex;
+  d.uBScreen.value = toGroup !== "plate" ? 1 : 0;
   d.uMix.value = transitionMix(vh, b!);
   d.uPixelSize.value = 3 * gl.getPixelRatio();
   apply(p);
@@ -194,6 +213,7 @@ export function LiveCompositor() {
     return {
       rtScene: null,
       rtDof: null,
+      rtB: null,
       dither: { scene: quadScene(ditherMat), camera: new OrthographicCamera(-1, 1, 1, -1, 0, 1), material: ditherMat },
       dof: { scene: quadScene(dofMat), material: dofMat },
       size: new Vector2(0, 0),
@@ -203,6 +223,7 @@ export function LiveCompositor() {
     () => () => {
       comp.rtScene?.dispose();
       comp.rtDof?.dispose();
+      comp.rtB?.dispose();
       comp.dither.material.dispose();
       comp.dof.material.dispose();
     },

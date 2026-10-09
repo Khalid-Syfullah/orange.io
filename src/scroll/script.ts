@@ -51,7 +51,7 @@ export const RULES = {
 // ----------------------------------------------------------------- beats ---
 
 export type Slot = "hero" | "left-line" | "right-card";
-export type BeatSide = "left" | "right" | "center";
+export type BeatSide = "left" | "left-narrow" | "right" | "center";
 
 type BeatSpec = {
   id: string;
@@ -80,7 +80,7 @@ const BEAT_SPECS: readonly BeatSpec[] = [
   { id: "wait", slot: "left-line", scene: "growth", atVh: 25, dwellVh: 110, side: "left", kind: "headline", title: "Growth takes time.", lead: "TODO: one line about patience." },
   { id: "grow", slot: "left-line", scene: "ripening", atVh: 30, dwellVh: 110, side: "left", kind: "headline", title: "Every effort bears fruit.", lead: "TODO: one line about ripening." },
   { id: "pick", slot: "left-line", scene: "plucking", atVh: 25, dwellVh: 100, side: "left", kind: "headline", title: "We pick.", lead: "TODO: one line about the harvest." },
-  { id: "floating-card", slot: "right-card", scene: "floating", atVh: 40, dwellVh: 120, side: "right", kind: "card", tag: "TODO tag", title: "TODO card title", lead: "TODO: a short paragraph that sits in the right column over the art." },
+  { id: "floating-card", slot: "left-line", scene: "floating", atVh: 40, dwellVh: 120, side: "left-narrow", kind: "headline", title: "Nature reveals its best.", lead: "TODO: one line about the fruit." },
   { id: "inside", slot: "left-line", scene: "split", atVh: 30, dwellVh: 120, side: "left", kind: "headline", title: "There is more inside.", lead: "TODO: one line about what is inside." },
   { id: "brand", slot: "hero", scene: "brand", atVh: 62, dwellVh: 106, side: "center", kind: "headline", title: "Orange.io", lead: "TODO: brand reveal line.", holdToEnd: true },
 ];
@@ -191,7 +191,8 @@ export const FRAME: Record<SceneName, FrameSpec> = {
   growth: { state: "open" },
   ripening: { state: "open" },
   plucking: { state: "open" },
-  floating: { state: "open" },
+  // the hairlines fade out at the end of the reveal; one registration mark announces the cut
+  floating: { state: "closed", fromVh: 1850 },
   // the split scene frames the two halves between the vertical lines
   split: { state: "open", lock: { l: 32, r: 68 } },
   brand: { state: "closed" },
@@ -232,7 +233,7 @@ export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1)
 export const FLY_ANCHORS = {
   treeFruit: { x: 62.1, y: 51.6, scale: 1.69, rotate: 0 },
   hand: { x: 67.3, y: 61.7, scale: 1.84, rotate: 0 },
-  center: { x: 64, y: 50, scale: 1.9, rotate: 20 },
+  center: { x: 50, y: 50, scale: 1.9, rotate: 0 },
 } as const;
 export type FlyAnchor = keyof typeof FLY_ANCHORS;
 
@@ -245,8 +246,7 @@ export const FLY_PATH: readonly { vh: number; anchor: FlyAnchor; opacity: number
   { vh: 1586, anchor: "hand", opacity: 0 },
   { vh: 1590, anchor: "hand", opacity: 1 },
   { vh: 1632, anchor: "center", opacity: 1 },
-  { vh: 1875, anchor: "center", opacity: 1 },
-  { vh: 1940, anchor: "center", opacity: 0 },
+  { vh: 1637, anchor: "center", opacity: 0 }, // the 3D studio orange is exactly here at 0.68
 ];
 
 /** Slow push-in over the whole stage; each scene gets an eased segment of it (continuous at boundaries). */
@@ -303,6 +303,17 @@ export const PLUCK = {
   stemDetaches: 0.65,
   separates: 0.66,
   towardCamera: 0.68,
+} as const;
+
+// -------------------------------------------------------------- studio ---
+
+/** Scene 06 windows, as progress. The 3D studio orange takes over from the fly orange at `start`. */
+export const STUDIO = {
+  start: 0.68,
+  settle: [0.71, 0.74], // the orange settles into the centre
+  rotate: [0.74, 0.77], // it turns slowly, tied to scroll
+  grow: [0.77, 0.8], // it grows a little
+  mark: [0.78, 0.8], // a single registration mark appears on its equator
 } as const;
 
 // ------------------------------------------------------------ validation ---
@@ -377,7 +388,7 @@ export function validateScript(beats: readonly BeatDef[] = BEATS): void {
   for (const n of SCENE_NAMES) {
     const f = FRAME[n];
     if (!f) problems.push(`scene ${n} has no frame state`);
-    else if (f.fromVh !== undefined && f.fromVh > SCENE_START_VH[n]) problems.push(`frame for ${n} starts after the scene does`);
+    else if (f.fromVh !== undefined && f.fromVh > SCENE_START_VH[n] + PACING[n]) problems.push(`frame for ${n} starts after the scene ends`);
   }
 
   if (problems.length) throw new Error(`Invalid scroll script:\n - ${problems.join("\n - ")}`);

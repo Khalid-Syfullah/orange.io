@@ -10,6 +10,7 @@ import { focusMove, ripenGrowth, ripenRgb } from "@/scroll/ripening";
 import { branchRecoil, handDistance, handPresence, pull, stemAttached, stemStretch, twist } from "@/scroll/pluck";
 import { APPROACH, PULL_DIR, fruitDisplacement } from "./pluck-pose";
 import { ModelSlot } from "./model-slot";
+import { peelTexture } from "./peel";
 import { mulberry32 } from "./rng";
 
 // ---------------------------------------------------------------- layout ---
@@ -315,52 +316,6 @@ function projectFruit(out: HeroFruit, group: Group, camera: PerspectiveCamera, l
   // diameter as a share of the viewport height
   out.size = (radius * 2) / (2 * dist * Math.tan((camera.fov * Math.PI) / 360));
   out.visible = true;
-}
-
-/**
- * Orange peel: fine pores, mottled colour variation and soft imperfections. The
- * same canvas drives colour (multiplied with the ripening tint) and bump, so
- * the pores catch the light instead of reading as a smooth plastic ball.
- */
-function peelTexture() {
-  const size = 256;
-  const c = document.createElement("canvas");
-  c.width = c.height = size;
-  const g = c.getContext("2d")!;
-  g.fillStyle = "#e9e9e9";
-  g.fillRect(0, 0, size, size);
-  const rnd = mulberry32(21);
-  // soft mottling
-  for (let i = 0; i < 70; i++) {
-    const r = 10 + rnd() * 34;
-    const x = rnd() * size;
-    const y = rnd() * size;
-    const grad = g.createRadialGradient(x, y, 0, x, y, r);
-    const dark = rnd() > 0.5;
-    grad.addColorStop(0, dark ? "rgba(150,150,150,0.28)" : "rgba(255,255,255,0.32)");
-    grad.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = grad;
-    g.fillRect(x - r, y - r, r * 2, r * 2);
-  }
-  // pores: many tiny dark pits, a few larger blemishes
-  for (let i = 0; i < 2600; i++) {
-    const r = 0.5 + rnd() * 1.1;
-    g.fillStyle = `rgba(70,70,70,${0.25 + rnd() * 0.35})`;
-    g.beginPath();
-    g.arc(rnd() * size, rnd() * size, r, 0, Math.PI * 2);
-    g.fill();
-  }
-  for (let i = 0; i < 14; i++) {
-    g.fillStyle = "rgba(90,90,90,0.22)";
-    g.beginPath();
-    g.arc(rnd() * size, rnd() * size, 2 + rnd() * 3, 0, Math.PI * 2);
-    g.fill();
-  }
-  const t = new CanvasTexture(c);
-  t.colorSpace = SRGBColorSpace;
-  t.wrapS = t.wrapT = RepeatWrapping;
-  t.repeat.set(2, 1);
-  return t;
 }
 
 function barkTexture() {
