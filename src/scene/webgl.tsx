@@ -18,8 +18,9 @@ export class WebGLBoundary extends Component<{ children: ReactNode }, { failed: 
   }
 }
 
-/** Capped device pixel ratio for every layer. */
-export const DPR: [number, number] = [1, 1.5];
+/** Capped device pixel ratio for every layer; lower on small screens. */
+export const DPR: [number, number] =
+  typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches ? [1, 1.15] : [1, 1.5];
 
 /**
  * Request a frame whenever `mv` changes (layers use frameloop="demand"). An

@@ -36,7 +36,7 @@ export function CardGroup({ index, at, out }: { index: number; at: number; out: 
       data-g={index}
       aria-label={g.name}
       role="group"
-      className="pointer-events-none absolute top-1/2 left-[8%] grid w-[84%] -translate-y-1/2 gap-7 md:left-[68%] md:w-[min(28vw,26rem)]"
+      className="pointer-events-none absolute bottom-[7%] left-[8%] grid w-[84%] gap-4 md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:gap-7 md:left-[68%] md:w-[min(28vw,26rem)]"
     >
       {g.cards.map((c, i) => (
         <Card key={c.tag} index={i} count={g.cards.length} {...c} />

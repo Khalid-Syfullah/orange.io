@@ -30,7 +30,7 @@ export function ScrollProvider({ children }: { children: React.ReactNode }) {
     if (reduce) return;
     gsap.registerPlugin(ScrollTrigger);
 
-    const lenis = new Lenis({ autoRaf: false });
+    const lenis = new Lenis({ autoRaf: false, syncTouch: false }) // smooth on wheel only; touch keeps native momentum;
     engine.lenis = lenis;
 
     lenis.on("scroll", ScrollTrigger.update);

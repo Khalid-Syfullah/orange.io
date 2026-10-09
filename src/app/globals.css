@@ -124,6 +124,13 @@
 
   /* Surface */
   --grain-opacity: 0.04;
+  --stage-scale: 1; /* the stage is shorter on small screens (same script, same progress) */
+}
+
+@media (max-width: 767px) {
+  :root {
+    --stage-scale: 0.7;
+  }
 }
 
 /* The dark press panel is a section style, not a theme switch. */

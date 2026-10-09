@@ -45,3 +45,17 @@ export function vh(p: number): number {
 export function activeBeats(p: number) {
   return BEATS.filter((b) => p >= b.at && p <= b.out);
 }
+
+/**
+ * The beat to jump to for the J / K shortcuts: the next beat that starts after `p`,
+ * or the previous beat that started before it (a little back-off, so pressing K
+ * while a beat has only just begun goes to the one before). Null at either end.
+ */
+export function adjacentBeat(p: number, dir: 1 | -1) {
+  const sorted = [...BEATS].sort((a, b) => a.at - b.at);
+  if (dir === 1) return sorted.find((b) => b.at > p + 0.002) ?? null;
+  return [...sorted].reverse().find((b) => b.at < p - 0.006) ?? null;
+}
+
+/** Where to scroll so beat `b` is fully shown (just past its fade-in). */
+export const beatLandingProgress = (b: { at: number }) => b.at + 0.006;

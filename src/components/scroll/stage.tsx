@@ -11,6 +11,7 @@ import { engine, progress, scrollToProgress } from "@/lib/progress";
 import { Beat, BeatCard, BeatLead, BeatLine } from "./beat";
 import { PointerLayer } from "./pointer-layer";
 import { PressTheme } from "./press-theme";
+import { StageBehaviours } from "./stage-behaviours";
 import { PointerReactions } from "./pointer-reactions";
 import { SceneCanvas } from "@/scene/scene-canvas";
 import { SceneTransition } from "@/scene/scene-transition";
@@ -78,10 +79,11 @@ export function Stage() {
   }, []);
 
   return (
-    <section ref={ref} data-stage className="relative" style={{ height: `${STAGE_VH}svh` }}>
+    <section ref={ref} data-stage className="relative" style={{ height: `calc(${STAGE_VH}svh * var(--stage-scale, 1))` }}>
       <div className="sticky top-0 h-svh w-full overflow-hidden">
         <PointerReactions />
         <PressTheme />
+        <StageBehaviours />
         {/* layers shift up to 6px x depth against the pointer; scene and dissolve share one shift */}
         <PointerLayer depth={0.4} className="-inset-2">
           <WebGLBoundary>
