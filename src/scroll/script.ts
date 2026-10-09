@@ -62,15 +62,47 @@ type BeatSpec = {
   /** How long the beat holds, in vh. */
   dwellVh: number;
   side: BeatSide;
-  kind: "headline" | "card";
+  kind: "headline" | "card" | "cards";
   tag?: string;
   title: string;
   lead: string;
+  /** kind "cards": the group's index in CARD_GROUPS. */
+  group?: number;
   /** Final beat: stays visible to the end of the stage. */
   holdToEnd?: boolean;
   /** Opening beat: reveals on load (progress 0) rather than from scroll. */
   intro?: boolean;
 };
+
+export type CardSpec = { tag: string; title: string; body: string };
+export type CardGroupSpec = { name: string; cards: readonly CardSpec[] };
+
+/** Right-column card groups. TODO(copy): all text is placeholder. A group holds 2 to 4 cards. */
+export const CARD_GROUPS: readonly CardGroupSpec[] = [
+  {
+    name: "Plant",
+    cards: [
+      { tag: "01 Seed", title: "Start small.", body: "TODO: one short paragraph about choosing what to begin with." },
+      { tag: "02 Soil", title: "Know the ground.", body: "TODO: one short paragraph about preparing the soil." },
+      { tag: "03 Light", title: "Give it light.", body: "TODO: one short paragraph about the conditions it needs." },
+    ],
+  },
+  {
+    name: "Tend",
+    cards: [
+      { tag: "01 Water", title: "Water with patience.", body: "TODO: one short paragraph about steady care." },
+      { tag: "02 Prune", title: "Cut what holds it back.", body: "TODO: one short paragraph about focus." },
+      { tag: "03 Wait", title: "Let it take its time.", body: "TODO: one short paragraph about patience." },
+    ],
+  },
+  {
+    name: "Harvest",
+    cards: [
+      { tag: "01 Pick", title: "Pick at the right moment.", body: "TODO: one short paragraph about timing." },
+      { tag: "02 Share", title: "Share what grew.", body: "TODO: one short paragraph about giving it away." },
+    ],
+  },
+];
 
 // TODO(copy): all text is placeholder.
 const BEAT_SPECS: readonly BeatSpec[] = [
@@ -78,9 +110,12 @@ const BEAT_SPECS: readonly BeatSpec[] = [
   { id: "plant", slot: "left-line", scene: "watering", atVh: 20, dwellVh: 100, side: "left", kind: "headline", title: "We plant.", lead: "TODO: one line about the seed." },
   { id: "tend", slot: "left-line", scene: "watering", atVh: 150, dwellVh: 100, side: "left", kind: "headline", title: "Every idea needs care.", lead: "TODO: one line about the water." },
   { id: "wait", slot: "left-line", scene: "growth", atVh: 25, dwellVh: 110, side: "left", kind: "headline", title: "Growth takes time.", lead: "TODO: one line about patience." },
+  { id: "cards-plant", slot: "right-card", scene: "growth", atVh: 42, dwellVh: 130, side: "right", kind: "cards", group: 0, title: "Plant", lead: "" },
+  { id: "cards-tend", slot: "right-card", scene: "growth", atVh: 202, dwellVh: 130, side: "right", kind: "cards", group: 1, title: "Tend", lead: "" },
   { id: "grow", slot: "left-line", scene: "ripening", atVh: 30, dwellVh: 110, side: "left", kind: "headline", title: "Every effort bears fruit.", lead: "TODO: one line about ripening." },
   { id: "pick", slot: "left-line", scene: "plucking", atVh: 25, dwellVh: 100, side: "left", kind: "headline", title: "We pick.", lead: "TODO: one line about the harvest." },
   { id: "floating-card", slot: "left-line", scene: "floating", atVh: 40, dwellVh: 120, side: "left-narrow", kind: "headline", title: "Nature reveals its best.", lead: "TODO: one line about the fruit." },
+  { id: "cards-harvest", slot: "right-card", scene: "floating", atVh: 40, dwellVh: 130, side: "right", kind: "cards", group: 2, title: "Harvest", lead: "" },
   { id: "inside", slot: "left-line", scene: "split", atVh: 120, dwellVh: 120, side: "top-left", kind: "headline", title: "There\u2019s more inside.", lead: "TODO: one line about what is inside." },
   { id: "brand", slot: "hero", scene: "brand", atVh: 62, dwellVh: 106, side: "center", kind: "headline", title: "Orange.io", lead: "TODO: brand reveal line.", holdToEnd: true },
 ];
@@ -394,6 +429,14 @@ export function validateScript(beats: readonly BeatDef[] = BEATS): void {
     }
     if (t.startVh < SCENE_START_VH[t.from]) problems.push(`dissolve into ${t.to} starts before scene ${t.from}`);
   }
+
+  // card groups: 2 to 4 cards, each referenced by exactly one beat
+  CARD_GROUPS.forEach((g, i) => {
+    if (g.cards.length < 2 || g.cards.length > 4) problems.push(`card group ${g.name} has ${g.cards.length} cards, expected 2 to 4`);
+    const n = beats.filter((b) => b.kind === "cards" && b.group === i).length;
+    if (n !== 1) problems.push(`card group ${g.name} is used by ${n} beats, expected 1`);
+  });
+  for (const b of beats) if (b.kind === "cards" && b.side !== "right") problems.push(`card beat ${b.id} must sit in the right column`);
 
   // frame
   for (const n of SCENE_NAMES) {

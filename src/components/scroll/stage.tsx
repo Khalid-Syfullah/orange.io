@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Hairlines } from "@/components/design/hairlines";
 import { BEATS, STAGE_VH } from "@/lib/timeline";
+import { CardGroup } from "./card-group";
 import { engine, progress, scrollToProgress } from "@/lib/progress";
 import { Beat, BeatCard, BeatLead, BeatLine } from "./beat";
 import { PointerLayer } from "./pointer-layer";
@@ -101,7 +102,9 @@ export function Stage() {
         <Hairlines />
         <PointerLayer depth={0.2}>
         <div data-layer="text" className="absolute inset-0">
-          {BEATS.map((b) => (
+          {BEATS.map((b) => b.kind === "cards" ? (
+            <CardGroup key={b.id} index={b.group!} at={b.at} out={b.out} />
+          ) : (
             <Beat key={b.id} at={b.at} out={b.out} side={b.side} intro={b.intro}>
               {b.kind === "card" ? (
                 <BeatCard tag={b.tag} title={b.title}>
