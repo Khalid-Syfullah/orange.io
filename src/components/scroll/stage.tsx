@@ -7,7 +7,11 @@ import { Hairlines } from "@/components/design/hairlines";
 import { BEATS, STAGE_VH } from "@/lib/timeline";
 import { engine, progress, scrollToProgress } from "@/lib/progress";
 import { Beat, BeatCard, BeatLead, BeatLine } from "./beat";
-import { ScenePlaceholder } from "./scene-placeholder";
+import { SceneCanvas } from "@/scene/scene-canvas";
+import { SceneTransition } from "@/scene/scene-transition";
+import { FlyLayer } from "@/scene/fly-layer";
+import { ParallaxLayer } from "@/scene/parallax-layer";
+import { WebGLBoundary } from "@/scene/webgl";
 
 /**
  * One very tall native-scrolling stage. Inside, a sticky full-viewport stack:
@@ -70,9 +74,14 @@ export function Stage() {
   return (
     <section ref={ref} data-stage className="relative" style={{ height: `${STAGE_VH}svh` }}>
       <div className="sticky top-0 h-svh w-full overflow-hidden">
-        <ScenePlaceholder />
-        <canvas data-layer="transition" aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" />
-        <canvas data-layer="fly" aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" />
+        <WebGLBoundary>
+          <SceneCanvas />
+          <SceneTransition />
+        </WebGLBoundary>
+        <FlyLayer />
+        <WebGLBoundary>
+          <ParallaxLayer />
+        </WebGLBoundary>
         <Hairlines />
         <div data-layer="text" className="absolute inset-0">
           {BEATS.map((b) => (

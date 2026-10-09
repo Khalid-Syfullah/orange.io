@@ -84,3 +84,16 @@ Per-scene hairline frame state (`FRAME` in the script; transition length `FRAME_
 | brand | closed | parts exit along `data-out` and fade |
 
 Registration marks pulse (1 to 1.4 to 1) within 18vh of each beat in/out point.
+
+## Dissolve windows
+Each scene change dissolves over the 45vh before the scene starts (`TRANSITION_VH`), so the new scene is fully resolved exactly at its start. `validateScript()` rejects any beat that overlaps a window.
+
+| Boundary | Window (vh) |
+| --- | --- |
+| opening to watering | 147 to 192 |
+| watering to growth | 483 to 528 |
+| growth to ripening | 963 to 1008 |
+| ripening to plucking | 1299 to 1344 |
+| plucking to floating | 1587 to 1632 (the orange travels hand to center here) |
+| floating to split | 1875 to 1920 |
+| split to brand | 2187 to 2232 |

@@ -199,6 +199,54 @@ export const FRAME: Record<SceneName, FrameSpec> = {
 export const PULSE_VH = 18;
 export const PULSE_SCALE = 1.4;
 
+// ------------------------------------------------- transitions, fly, dolly ---
+
+/**
+ * Dither dissolve between scenes. The window for the boundary that starts a
+ * scene runs from (sceneStart - TRANSITION_VH) to sceneStart, so the new scene
+ * is fully resolved exactly when its scene begins. Windows sit inside travel
+ * stretches (validated), never over a beat.
+ */
+export const TRANSITION_VH = 45;
+
+export type Boundary = { index: number; from: SceneName; to: SceneName; atVh: number; startVh: number };
+
+/** One boundary per scene change: opening->watering, watering->growth, ... */
+export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1).map((to, i) => ({
+  index: i,
+  from: SCENE_NAMES[i],
+  to,
+  atVh: SCENE_START_VH[to],
+  startVh: SCENE_START_VH[to] - TRANSITION_VH,
+}));
+
+/** Named positions the fly element (the orange) travels between. x/y are viewport percent. */
+export const FLY_ANCHORS = {
+  treeFruit: { x: 70, y: 36, scale: 0.55, rotate: 0 },
+  hand: { x: 63, y: 52, scale: 0.7, rotate: -24 },
+  center: { x: 64, y: 50, scale: 1.3, rotate: 200 },
+} as const;
+export type FlyAnchor = keyof typeof FLY_ANCHORS;
+
+/**
+ * The fly element's path, in stage vh. Between two keys it interpolates
+ * position, scale, rotation and opacity. The hand -> center move happens in the
+ * plucking -> floating dissolve window so the eye follows it across the cut.
+ */
+export const FLY_PATH: readonly { vh: number; anchor: FlyAnchor; opacity: number }[] = [
+  { vh: 1008, anchor: "treeFruit", opacity: 0 },
+  { vh: 1060, anchor: "treeFruit", opacity: 1 },
+  { vh: 1420, anchor: "treeFruit", opacity: 1 },
+  { vh: 1500, anchor: "hand", opacity: 1 },
+  { vh: 1587, anchor: "hand", opacity: 1 },
+  { vh: 1632, anchor: "center", opacity: 1 },
+  { vh: 1875, anchor: "center", opacity: 1 },
+  { vh: 1940, anchor: "center", opacity: 0 },
+];
+
+/** Slow push-in over the whole stage; each scene gets an eased segment of it (continuous at boundaries). */
+export const DOLLY_PUSH = { z: [10, 7], fov: [40, 34] } as const;
+
 // ------------------------------------------------------------ validation ---
 
 const EPS = 1e-6;
@@ -257,6 +305,14 @@ export function validateScript(beats: readonly BeatDef[] = BEATS): void {
     const longest = Math.max(0, ...stretches.filter((t) => t.scene === n).map((t) => t.lengthVh));
     if (longest < RULES.travelMin - EPS) problems.push(`scene ${n} has no travel stretch of ${RULES.travelMin}vh (longest ${longest}vh)`);
     if (TRAVEL_MOVES[n].length === 0) problems.push(`scene ${n} lists nothing that moves during travel`);
+  }
+
+  // transition windows must sit in travel, not over a beat
+  for (const t of BOUNDARIES) {
+    for (const b of beats) {
+      if (b.startVh < t.atVh && b.endVh > t.startVh) problems.push(`beat ${b.id} overlaps the ${t.from} to ${t.to} dissolve (${t.startVh}-${t.atVh}vh)`);
+    }
+    if (t.startVh < SCENE_START_VH[t.from]) problems.push(`dissolve into ${t.to} starts before scene ${t.from}`);
   }
 
   // frame
