@@ -81,3 +81,13 @@ describe("split scene", () => {
     expect(studioPose(0.87)).toEqual(a);
   });
 });
+
+describe("brand scene", () => {
+  it("parts the halves further and pulls the camera back after 0.94, never moving them inward", () => {
+    expect(studioPose(0.94).gap).toBeCloseTo(studioPose(0.93).gap, 9);
+    expect(studioPose(0.96).gap).toBeGreaterThan(studioPose(0.94).gap);
+    expect(studioPose(1).gap).toBeGreaterThanOrEqual(studioPose(0.96).gap);
+    expect(studioPose(0.96).cameraZ).toBeGreaterThan(studioPose(0.94).cameraZ);
+    expect(studioPose(1).press).toBe(1);
+  });
+});

@@ -91,4 +91,3 @@ Each scene change dissolves (except into watering, growth, ripening, plucking an
 | Boundary | Window (vh) |
 | --- | --- |
 | plucking to floating | 1587 to 1632 (the orange travels hand to center here) |
-| split to brand | 2187 to 2232 |

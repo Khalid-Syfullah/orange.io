@@ -26,7 +26,8 @@ export function StaticStory() {
           ) : (
             <div key={b.id} className="mb-12">
               {b.tag ? <Tag className="mb-3">{b.tag}</Tag> : null}
-              <h2 className={b.id === "hero" ? "text-display-xl" : "text-display-l"}>{b.title}</h2>
+              <h2 className={b.id === "hero" || b.kind === "brand" ? "text-display-xl" : "text-display-l"}>{b.title}</h2>
+              {b.tagline ? <p className="text-lead mt-4">{b.tagline}</p> : null}
               <p className="text-lead mt-4 max-w-[34ch] text-foreground/80">{b.lead}</p>
             </div>
           ))}

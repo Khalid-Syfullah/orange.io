@@ -1,4 +1,4 @@
-import { FLY_ANCHORS, SPLIT as P, STUDIO as S } from "./script";
+import { BRAND as B, FLY_ANCHORS, SPLIT as P, STUDIO as S } from "./script";
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const smooth = (t: number) => t * t * (3 - 2 * t);
@@ -53,11 +53,11 @@ export function studioPose(p: number, out: StudioPose = { visible: false, y: 0, 
   out.rotX = 0.16 * Math.sin(Math.PI * r);
   out.scale = 1 + 0.12 * win(p, S.grow);
   // a slow push-in on the product shot over the whole scene
-  out.cameraZ = CAMERA_Z0 - 0.25 * win(p, [S.start, S.grow[1]]) - 0.55 * win(p, [P.line[0], P.apart[1]]) + 1.5 * win(p, P.faces);
+  out.cameraZ = CAMERA_Z0 - 0.25 * win(p, [S.start, S.grow[1]]) - 0.55 * win(p, [P.line[0], P.apart[1]]) + 1.5 * win(p, P.faces) + 1.0 * win(p, B.pullBack);
   out.halves = p >= P.stop[0];
   out.orient = Math.PI / 2 * stop;
   // a hairline gap, then the halves part and drift to the sides
-  out.gap = 0.025 * win(p, P.line) + 0.3 * win(p, P.split) + 0.9 * win(p, P.apart) + 0.75 * win(p, P.faces);
+  out.gap = 0.025 * win(p, P.line) + 0.3 * win(p, P.split) + 0.9 * win(p, P.apart) + 0.75 * win(p, P.faces) + 0.8 * win(p, B.outward);
   out.outward = win(p, [P.split[0] + 0.01, P.apart[1]]);
   out.press = win(p, P.faces);
   out.shadow = 1 - win(p, [P.split[0], P.apart[0]]);

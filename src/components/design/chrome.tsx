@@ -100,6 +100,7 @@ export function Chrome() {
       <div
         className="absolute hidden md:block"
         style={{
+          opacity: "var(--rail-opacity, 1)",
           left: "calc(var(--v1) - 3px)",
           top: "calc(var(--h2) + 20px)",
           height: "clamp(90px, calc(100% - var(--h2) - 56px), 170px)",
@@ -109,7 +110,7 @@ export function Chrome() {
       </div>
 
       {/* compact indicator (mobile); the menu Sheet holds the chapter list */}
-      <MobileRail className="absolute inset-x-4 top-1.5 md:hidden" />
+      <MobileRail className="absolute inset-x-4 top-1.5 opacity-[var(--rail-opacity,1)] md:hidden" />
 
       {/* CTA, top right inside the top hairline */}
       <div

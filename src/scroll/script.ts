@@ -62,7 +62,7 @@ type BeatSpec = {
   /** How long the beat holds, in vh. */
   dwellVh: number;
   side: BeatSide;
-  kind: "headline" | "card" | "cards";
+  kind: "headline" | "card" | "cards" | "brand";
   tag?: string;
   title: string;
   lead: string;
@@ -72,6 +72,9 @@ type BeatSpec = {
   holdToEnd?: boolean;
   /** Opening beat: reveals on load (progress 0) rather than from scroll. */
   intro?: boolean;
+  /** kind "brand": the tagline and call to action. */
+  tagline?: string;
+  cta?: { label: string; href: string };
 };
 
 export type CardSpec = { tag: string; title: string; body: string };
@@ -117,7 +120,7 @@ const BEAT_SPECS: readonly BeatSpec[] = [
   { id: "floating-card", slot: "left-line", scene: "floating", atVh: 40, dwellVh: 120, side: "left-narrow", kind: "headline", title: "Nature reveals its best.", lead: "TODO: one line about the fruit." },
   { id: "cards-harvest", slot: "right-card", scene: "floating", atVh: 40, dwellVh: 130, side: "right", kind: "cards", group: 2, title: "Harvest", lead: "" },
   { id: "inside", slot: "left-line", scene: "split", atVh: 120, dwellVh: 120, side: "top-left", kind: "headline", title: "There\u2019s more inside.", lead: "TODO: one line about what is inside." },
-  { id: "brand", slot: "hero", scene: "brand", atVh: 62, dwellVh: 106, side: "center", kind: "headline", title: "Orange.io", lead: "TODO: brand reveal line.", holdToEnd: true },
+  { id: "brand", slot: "hero", scene: "brand", atVh: 96, dwellVh: 72, side: "center", kind: "brand", title: "Orange.io", tagline: "Great things grow together.", lead: "From the smallest beginnings to extraordinary possibilities.", cta: { label: "Explore what we do", href: "#what-we-grow" }, holdToEnd: true },
 ];
 
 export type BeatDef = BeatSpec & {
@@ -137,8 +140,8 @@ export const BEATS: readonly BeatDef[] = BEAT_SPECS.map((b) => {
     startVh,
     endVh,
     at: startVh / STAGE_VH,
-    // the closing beat must not fade out at progress 1
-    out: b.holdToEnd ? 1.001 : endVh / STAGE_VH,
+    // the closing beat holds: its fade-out lies beyond the end of the stage
+    out: b.holdToEnd ? 1.2 : endVh / STAGE_VH,
   };
 });
 
@@ -250,7 +253,7 @@ export const TRANSITION_VH = 45;
 export type Boundary = { index: number; from: SceneName; to: SceneName; atVh: number; startVh: number };
 
 /** Scenes entered by a slow camera dolly instead of a dissolve (the world simply continues). */
-export const NO_DISSOLVE: readonly SceneName[] = ["watering", "growth", "ripening", "plucking", "split"];
+export const NO_DISSOLVE: readonly SceneName[] = ["watering", "growth", "ripening", "plucking", "split", "brand"];
 
 /** One boundary per dissolved scene change: watering->growth, growth->ripening, ... */
 export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1)
@@ -353,6 +356,16 @@ export const STUDIO = {
 
 // --------------------------------------------------------------- split ---
 
+/** Scene 08 windows, as progress: the halves part further, the camera pulls back, the brand resolves. */
+export const BRAND = {
+  outward: [0.94, 0.96], // halves move gently outward, making room in the centre
+  pullBack: [0.94, 0.96],
+  logo: 0.97, // the mark and the Orange.io headline begin
+  tagline: 0.99,
+  support: 0.993,
+  cta: 0.996,
+} as const;
+
 /** Scene 07 windows, as progress. The two halves replace the whole orange at 0.80 (same pixels). */
 export const SPLIT = {
   stop: [0.8, 0.83], // the rotation winds down into the cutting orientation
@@ -396,6 +409,8 @@ export function validateScript(beats: readonly BeatDef[] = BEATS): void {
     const dwell = b.endVh - b.startVh;
     if (b.slot === "hero" && b.scene === "opening") {
       if (b.endVh > RULES.heroOutBy) problems.push(`hero beat ends at ${b.endVh}vh, must be out by ${RULES.heroOutBy}vh`);
+    } else if (b.holdToEnd) {
+      if (dwell > RULES.dwellMax + EPS) problems.push(`beat ${b.id} dwells ${dwell}vh, must be at most ${RULES.dwellMax}vh`);
     } else if (dwell < RULES.dwellMin - EPS || dwell > RULES.dwellMax + EPS) {
       problems.push(`beat ${b.id} dwells ${dwell}vh, must be ${RULES.dwellMin}-${RULES.dwellMax}vh`);
     }

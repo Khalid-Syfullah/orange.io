@@ -59,11 +59,11 @@ export function Beat({
 }
 
 /** Headline that splits by character and reveals/hides with the enclosing beat. */
-export function BeatLine({ text, className, as = "h2" }: { text: string; className?: string; as?: "h1" | "h2" | "h3" | "p" }) {
+export function BeatLine({ text, className, as = "h2", hold = false }: { text: string; className?: string; as?: "h1" | "h2" | "h3" | "p"; hold?: boolean }) {
   const { at, out, intro } = useContext(BeatCtx);
   // the intro headline reveals on load (whileInView, once); every other line is scrubbed by scroll
   if (intro) return <SplitReveal text={text} as={as} className={className} delay={0.3} />;
-  return <SplitReveal text={text} as={as} className={className} progress={progress} range={[at, out]} />;
+  return <SplitReveal text={text} as={as} className={className} progress={progress} range={[at, out]} hold={hold} />;
 }
 
 /** Paragraph that fades up after the headline has begun to reveal. */

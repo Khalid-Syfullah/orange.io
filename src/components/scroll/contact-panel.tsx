@@ -151,7 +151,7 @@ function ContactForm() {
  */
 export function ContactPanel() {
   return (
-    <section id="contact" className="panel-press relative z-10">
+    <section id="contact" data-press className="panel-press relative z-10">
       <Terms />
       <div className="grid min-h-svh content-center px-[8%] py-24">
         <span id="contact-title" className="sr-only">

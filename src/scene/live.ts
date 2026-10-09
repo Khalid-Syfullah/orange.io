@@ -11,7 +11,7 @@ export const SCENE_GROUP: Record<SceneName, SceneGroup> = {
   plucking: "world",
   floating: "studio",
   split: "studio",
-  brand: "plate",
+  brand: "studio",
 };
 
 export const groupOf = (s: SceneName): SceneGroup => SCENE_GROUP[s];

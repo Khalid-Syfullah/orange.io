@@ -22,6 +22,8 @@ type Props = {
   progress?: MotionValue<number>;
   range?: readonly [number, number];
   as?: "h1" | "h2" | "h3" | "p" | "span";
+  /** Scroll driver only: reveal and then stay (never hides again). */
+  hold?: boolean;
 };
 
 const REVEAL_SHARE = 0.35; // share of the range spent revealing
@@ -33,12 +35,14 @@ function ScrollChar({
   total,
   progress,
   range,
+  hold,
 }: {
   ch: string;
   index: number;
   total: number;
   progress: MotionValue<number>;
   range: readonly [number, number];
+  hold?: boolean;
 }) {
   const [a, b] = range;
   const len = b - a;
@@ -46,8 +50,8 @@ function ScrollChar({
   const charSpan = revealSpan * 0.4;
   const start = a + (index / Math.max(total - 1, 1)) * (revealSpan - charSpan);
   const hideStart = b - len * HIDE_SHARE;
-  const t = useTransform(progress, [start, start + charSpan, hideStart, b], [0, 1, 1, 0]);
-  const y = useTransform(progress, [start, start + charSpan, hideStart, b], ["0.4em", "0em", "0em", "-0.2em"]);
+  const t = useTransform(progress, hold ? [start, start + charSpan] : [start, start + charSpan, hideStart, b], hold ? [0, 1] : [0, 1, 1, 0]);
+  const y = useTransform(progress, hold ? [start, start + charSpan] : [start, start + charSpan, hideStart, b], hold ? ["0.4em", "0em"] : ["0.4em", "0em", "0em", "-0.2em"]);
   return (
     <motion.span style={{ opacity: t, y, display: "inline-block" }}>{ch}</motion.span>
   );
@@ -85,6 +89,7 @@ export function SplitReveal({
   progress,
   range = [0, 1],
   as = "h2",
+  hold = false,
 }: Props) {
   const reduce = useReducedMotion();
   const Tag = motion[as] as typeof motion.h2;
@@ -122,7 +127,7 @@ export function SplitReveal({
           {Array.from(word).map((ch) => {
             const i = n++;
             return progress ? (
-              <ScrollChar key={i} ch={ch} index={i} total={total} progress={progress} range={range} />
+              <ScrollChar key={i} ch={ch} index={i} total={total} progress={progress} range={range} hold={hold} />
             ) : (
               <motion.span
                 key={i}

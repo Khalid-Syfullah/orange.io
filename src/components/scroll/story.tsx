@@ -7,6 +7,7 @@ import { Stage } from "./stage";
 import { StaticStory } from "./static-story";
 import { DevOverlay } from "./dev-overlay";
 import { ContactPanel } from "./contact-panel";
+import { HowItWorks, SiteFooter, WhatWeGrow } from "./page-sections";
 
 /** The home experience: tall stage normally, stacked stills under reduced motion. */
 export function Story() {
@@ -22,7 +23,10 @@ export function Story() {
       ) : (
         <Stage />
       )}
+      <WhatWeGrow />
+      <HowItWorks />
       <ContactPanel />
+      <SiteFooter />
       <DevOverlay />
     </>
   );
