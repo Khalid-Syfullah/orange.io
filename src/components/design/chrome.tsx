@@ -15,7 +15,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { EASE } from "@/lib/motion";
-import { progress as sharedProgress, scrollToProgress } from "@/lib/progress";
+import { progress as sharedProgress, scrollToChapter } from "@/lib/progress";
 import { CHAPTERS, chapterIndex } from "@/lib/timeline";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +69,7 @@ export function Chrome() {
   const active = useActiveChapter();
   const [open, setOpen] = useState(false);
   const go = (i: number) => {
-    scrollToProgress(CHAPTERS[i].range[0]);
+    scrollToChapter(i);
     setOpen(false);
   };
 

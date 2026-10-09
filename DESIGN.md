@@ -75,3 +75,9 @@ Respect `prefers-reduced-motion`. Split text keeps an `aria-label` with the full
 - `ui/button` variants `pill`, `pill-light`, `orange` (arrow chip nudges 2px); `ui/badge` variant `tag` (wrapped by `design/tag`).
 - `design/split-reveal` (`whileInView` once, or `progress` + `range=[in,out]`), `design/hover-roll`, `design/hairlines` (optional `visible` MotionValue), `design/grain-overlay`, `design/chrome` (mark, menu Sheet, chapter rail, CTA).
 - Shared scroll value: `src/lib/progress.ts` (`progress`); chapters and scenes: `src/lib/timeline.ts`. All shown at `/design`.
+
+## Scroll engine (src/components/scroll, src/lib)
+- `STAGE_VH` (2400) sets the stage height in `svh`; `SCENES`, `CHAPTERS`, `BEATS` and helpers (`sceneProgress`, `currentScene`, `currentChapter`, `vh`) live in `timeline.ts`.
+- `ScrollProvider` (layout): Lenis driven by the GSAP ticker, synced with ScrollTrigger; writes `velocity`. `Stage`: one ScrollTrigger writes `progress`, restores it after resize/orientation changes.
+- `Beat` / `BeatLine` / `BeatLead` / `BeatCard`: beats share one position and are visible only inside `[at, out]`. Gaps between beats are deliberate travel.
+- Dev overlay (dev builds only): keys 1-8 jump to scene starts, `h` toggles. Reduced motion renders `StaticStory` (stacked chapters with still placeholders) instead of the stage.
