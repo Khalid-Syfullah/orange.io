@@ -7,6 +7,8 @@ import { Hairlines } from "@/components/design/hairlines";
 import { BEATS, STAGE_VH } from "@/lib/timeline";
 import { engine, progress, scrollToProgress } from "@/lib/progress";
 import { Beat, BeatCard, BeatLead, BeatLine } from "./beat";
+import { PointerLayer } from "./pointer-layer";
+import { PointerReactions } from "./pointer-reactions";
 import { SceneCanvas } from "@/scene/scene-canvas";
 import { SceneTransition } from "@/scene/scene-transition";
 import { FlyLayer } from "@/scene/fly-layer";
@@ -74,15 +76,24 @@ export function Stage() {
   return (
     <section ref={ref} data-stage className="relative" style={{ height: `${STAGE_VH}svh` }}>
       <div className="sticky top-0 h-svh w-full overflow-hidden">
-        <WebGLBoundary>
-          <SceneCanvas />
-          <SceneTransition />
-        </WebGLBoundary>
-        <FlyLayer />
-        <WebGLBoundary>
-          <ParallaxLayer />
-        </WebGLBoundary>
+        <PointerReactions />
+        {/* layers shift up to 6px x depth against the pointer; scene and dissolve share one shift */}
+        <PointerLayer depth={0.4} className="-inset-2">
+          <WebGLBoundary>
+            <SceneCanvas />
+            <SceneTransition />
+          </WebGLBoundary>
+        </PointerLayer>
+        <PointerLayer depth={1}>
+          <FlyLayer />
+        </PointerLayer>
+        <PointerLayer depth={0.7} className="-inset-2">
+          <WebGLBoundary>
+            <ParallaxLayer />
+          </WebGLBoundary>
+        </PointerLayer>
         <Hairlines />
+        <PointerLayer depth={0.2}>
         <div data-layer="text" className="absolute inset-0">
           {BEATS.map((b) => (
             <Beat key={b.id} at={b.at} out={b.out} side={b.side}>
@@ -99,6 +110,7 @@ export function Stage() {
             </Beat>
           ))}
         </div>
+        </PointerLayer>
       </div>
     </section>
   );

@@ -3,14 +3,15 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { ShaderMaterial, type Texture } from "three";
-import { progress } from "@/lib/progress";
+import { progress, velocityNorm } from "@/lib/progress";
+import { sheen, sheenX, sheenY } from "@/lib/reactions";
 import { currentScene } from "@/lib/timeline";
 import { DOLLY_PUSH, type SceneName } from "@/scroll/script";
 import { DEFAULT_DOLLY, useDollyTrack } from "./dolly";
 import { FULLSCREEN_VERT, PLATE_FRAG } from "./glsl";
 import { usePlateTextures } from "./plates";
 import { createPlateUniforms, usePlateUniformUpdater, type PlateUniforms } from "./plate-uniforms";
-import { DPR } from "./webgl";
+import { DPR, useInvalidateOn } from "./webgl";
 
 type PlateMaterial = ShaderMaterial & { uniforms: { uTex: { value: Texture | null } } & PlateUniforms };
 
@@ -39,6 +40,11 @@ function PlateQuad() {
     [],
   );
   const apply = usePlateUniformUpdater(material.uniforms);
+  // velocity and sheen reactions request frames too (they ease back to exactly 0)
+  useInvalidateOn(velocityNorm);
+  useInvalidateOn(sheen);
+  useInvalidateOn(sheenX, () => sheen.get() > 0);
+  useInvalidateOn(sheenY, () => sheen.get() > 0);
 
   useFrame(() => stepPlate(material, shown.current, textures, progress.get(), apply));
 

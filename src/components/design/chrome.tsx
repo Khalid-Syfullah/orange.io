@@ -15,6 +15,7 @@ import {
 import { scrollToChapter } from "@/lib/progress";
 import { CHAPTERS } from "@/lib/timeline";
 import { ChapterRail, MobileRail, useActiveChapter } from "./rail";
+import { HoverRoll } from "./hover-roll";
 import { cn } from "@/lib/utils";
 
 function Mark({ className }: { className?: string }) {
@@ -36,7 +37,7 @@ function ChapterList({ active, onSelect }: { active: number; onSelect: (i: numbe
             onClick={() => onSelect(i)}
             aria-current={i === active ? "step" : undefined}
             className={cn(
-              "text-label flex w-full items-center gap-3 rounded-[4px] px-2 py-3 text-left outline-none",
+              "group text-label flex w-full items-center gap-3 rounded-[4px] px-2 py-3 text-left outline-none",
               "focus-visible:ring-2 focus-visible:ring-ring",
               i === active ? "text-foreground" : "text-foreground/50 hover:text-foreground",
             )}
@@ -45,7 +46,7 @@ function ChapterList({ active, onSelect }: { active: number; onSelect: (i: numbe
               aria-hidden="true"
               className={cn("h-px bg-current transition-[width] duration-500 ease-out-soft", i === active ? "w-6" : "w-3")}
             />
-            {c.label}
+            <HoverRoll text={c.label} />
           </button>
         </li>
       ))}

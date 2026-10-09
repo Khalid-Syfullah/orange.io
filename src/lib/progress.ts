@@ -12,6 +12,12 @@ export const progress = motionValue(0);
 /** Scroll velocity in px per frame (signed), written by the scroll engine. */
 export const velocity = motionValue(0);
 
+/**
+ * Smoothed, clamped velocity in -1..1 for effects (smear, breath, cloud drift).
+ * Snaps to exactly 0 once scrolling stops, so every effect returns to rest.
+ */
+export const velocityNorm = motionValue(0);
+
 type Engine = { lenis: Lenis | null; stage: HTMLElement | null };
 export const engine: Engine = { lenis: null, stage: null };
 

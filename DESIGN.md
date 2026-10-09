@@ -97,3 +97,10 @@ Respect `prefers-reduced-motion`. Split text keeps an `aria-label` with the full
 - `FlyLayer` (DOM): the orange travels between the `treeFruit`, `hand` and `center` anchors along `FLY_PATH`; hand to center happens inside the plucking to floating dissolve.
 - `ParallaxLayer`: 22 halftone clouds in one instanced mesh. Scroll progress sets position (deeper moves faster); smoothed scroll velocity adds drift and stretch.
 - All layers use `frameloop="demand"`, DPR capped at 1.5, no per-frame allocation, and a WebGL error boundary. Per-frame mutation lives in plain functions (`stepPlate`, `stepDissolve`, `stepClouds`) so the React lint rules stay on.
+
+## Pointer and velocity reactions
+- `src/lib/reactions.ts` holds the tunables and MotionValues (`pointerX/Y`, `sheen`, `sheenX/Y`); `velocityNorm` (progress.ts) is scroll velocity smoothed, clamped to -1..1 and snapped to exactly 0 at rest.
+- Sheen: a warm-white, faintly iridescent highlight in the shared plate shader, set by pointer move, decaying with a 400ms time constant to exactly 0. It is applied in both the scene and dissolve shaders. For now it lights the placeholder plate; the fruit mesh will reuse `applySheen`.
+- Velocity: vertical smear at the screen edges (max 1% uv), 3% scale breath on the plate and the fly orange, faster cloud drift. All zero at rest.
+- Pointer parallax: `PointerLayer` shifts by at most 6px x depth (scene 0.4, clouds 0.7, fly 1, text 0.2); hairlines stay fixed.
+- Sheen and parallax run only with a fine hovering pointer and without reduced motion. The decay loop runs only while the sheen is active and stops when the tab is hidden. `HoverRoll` (with a screen-reader text) is used in pill buttons and the chapter list.

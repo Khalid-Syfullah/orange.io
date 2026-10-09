@@ -1,9 +1,9 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { Color, InstancedBufferAttribute, PlaneGeometry, ShaderMaterial } from "three";
-import { progress, velocity } from "@/lib/progress";
+import { progress, velocityNorm } from "@/lib/progress";
 import { CLOUD_FRAG, CLOUD_VERT } from "./glsl";
 import { DPR, useInvalidateOn } from "./webgl";
 
@@ -26,21 +26,16 @@ type CloudMaterial = ShaderMaterial & {
   uniforms: { uProgress: { value: number }; uVel: { value: number }; uAspect: { value: number }; uDot: { value: number } };
 };
 
-/** Per-frame step. Returns true while the smoothed velocity is still settling. */
-function stepClouds(m: CloudMaterial, smooth: { v: number }, dt: number, p: number, vel: number, aspect: number, dpr: number): boolean {
+/** Per-frame step. velocityNorm is already smoothed, clamped and exactly 0 at rest. */
+function stepClouds(m: CloudMaterial, p: number, vel: number, aspect: number, dpr: number) {
   const u = m.uniforms;
-  // velocity is smoothed so clouds ease back to rest
-  const target = Math.max(-1, Math.min(1, vel / 40));
-  smooth.v += (target - smooth.v) * Math.min(1, dt * 8);
   u.uProgress.value = p;
-  u.uVel.value = smooth.v;
+  u.uVel.value = vel;
   u.uAspect.value = aspect;
   u.uDot.value = DOT_CSS * dpr;
-  return Math.abs(smooth.v) > 0.002 || Math.abs(target) > 0.002;
 }
 
 function Clouds() {
-  const invalidate = useThree((s) => s.invalidate);
   const size = useThree((s) => s.size);
   const geometry = useMemo(() => {
     const g = new PlaneGeometry(1, 1);
@@ -74,13 +69,10 @@ function Clouds() {
       }) as CloudMaterial,
     [],
   );
-  const smooth = useRef({ v: 0 });
   useInvalidateOn(progress);
+  useInvalidateOn(velocityNorm);
 
-  useFrame((state, dt) => {
-    const busy = stepClouds(material, smooth.current, dt, progress.get(), velocity.get(), size.width / size.height, state.viewport.dpr);
-    if (busy) invalidate(); // keep rendering until the velocity settles
-  });
+  useFrame((state) => stepClouds(material, progress.get(), velocityNorm.get(), size.width / size.height, state.viewport.dpr));
 
   return (
     <instancedMesh args={[geometry, material, COUNT]} frustumCulled={false} />

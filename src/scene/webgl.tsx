@@ -21,8 +21,13 @@ export class WebGLBoundary extends Component<{ children: ReactNode }, { failed: 
 /** Capped device pixel ratio for every layer. */
 export const DPR: [number, number] = [1, 1.5];
 
-/** Request a frame whenever `mv` changes (layers use frameloop="demand"). */
-export function useInvalidateOn(mv: MotionValue<number>) {
+/**
+ * Request a frame whenever `mv` changes (layers use frameloop="demand"). An
+ * optional `when` guard skips the request while the layer has nothing to draw.
+ */
+export function useInvalidateOn(mv: MotionValue<number>, when?: () => boolean) {
   const invalidate = useThree((s) => s.invalidate);
-  useMotionValueEvent(mv, "change", () => invalidate());
+  useMotionValueEvent(mv, "change", () => {
+    if (!when || when()) invalidate();
+  });
 }

@@ -4,7 +4,8 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { motion, useTransform } from "motion/react";
 import { useMemo } from "react";
 import { ShaderMaterial, type Texture } from "three";
-import { progress } from "@/lib/progress";
+import { progress, velocityNorm } from "@/lib/progress";
+import { sheen, sheenX, sheenY } from "@/lib/reactions";
 import { STAGE_VH } from "@/lib/timeline";
 import type { SceneName } from "@/scroll/script";
 import { DITHER_FRAG, FULLSCREEN_VERT } from "./glsl";
@@ -54,7 +55,13 @@ function Dissolve({ direction }: { direction: 1 | -1 }) {
     [direction],
   );
   const apply = usePlateUniformUpdater(material.uniforms);
-  useInvalidateOn(progress);
+  // only while a dissolve window is running; otherwise the layer is hidden and idle
+  const running = () => activeBoundary(progress.get() * STAGE_VH) !== null;
+  useInvalidateOn(progress, running);
+  useInvalidateOn(velocityNorm, running);
+  useInvalidateOn(sheen, running);
+  useInvalidateOn(sheenX, () => running() && sheen.get() > 0);
+  useInvalidateOn(sheenY, () => running() && sheen.get() > 0);
 
   useFrame((state) => stepDissolve(material, textures, progress.get(), state.viewport.dpr, apply));
 

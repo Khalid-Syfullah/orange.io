@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, useTransform } from "motion/react";
-import { progress } from "@/lib/progress";
+import { progress, velocityNorm } from "@/lib/progress";
+import { REACTIONS } from "@/lib/reactions";
 import { STAGE_VH } from "@/lib/timeline";
 import { flyAt, type FlyValues } from "@/scroll/fly";
 
@@ -19,7 +20,8 @@ export function FlyLayer() {
   const read = (p: number) => flyAt(p * STAGE_VH, scratch);
   const x = useTransform(progress, (p) => `${read(p).x}vw`);
   const y = useTransform(progress, (p) => `${read(p).y}vh`);
-  const scale = useTransform(progress, (p) => read(p).scale);
+  // scale breath with scroll speed; exactly 1x at rest
+  const scale = useTransform([progress, velocityNorm], ([p, v]: number[]) => read(p).scale * (1 + REACTIONS.breath * Math.abs(v)));
   const rotate = useTransform(progress, (p) => read(p).rotate);
   const opacity = useTransform(progress, (p) => read(p).opacity);
   const visibility = useTransform(progress, (p) => (read(p).opacity > 0.001 ? "visible" : "hidden"));

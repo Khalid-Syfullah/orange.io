@@ -8,12 +8,14 @@ type Props = {
 };
 
 /**
- * Characters roll vertically on hover/focus. Also reacts to a hovered ancestor
- * that has the `group` class (e.g. a link wrapping the text).
+ * Characters roll vertically on hover/focus. Also reacts to a hovered or
+ * focused ancestor that has the `group` class (a link or button wrapping it).
+ * The visible characters are aria-hidden; screen readers get the plain text.
  */
 export function HoverRoll({ text, className, stagger = 14 }: Props) {
   return (
-    <span aria-label={text} className={cn("group/roll inline-flex whitespace-pre", className)}>
+    <span className={cn("group/roll inline-flex whitespace-pre", className)}>
+      <span className="sr-only">{text}</span>
       {Array.from(text).map((ch, i) => (
         <span
           key={i}
