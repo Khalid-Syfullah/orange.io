@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SplitReveal } from "@/components/design/split-reveal";
-import { ButtonDemos, HoverRollDemo, LiveChrome, ProgressScrubber } from "@/components/design/design-demos";
+import { ButtonDemos, HoverRollDemo, LiveChrome, ProgressScrubber, RailDemo } from "@/components/design/design-demos";
 import { Tag } from "@/components/design/tag";
 import { RegistrationMark } from "@/components/design/registration-mark";
 
@@ -83,6 +83,10 @@ export default function DesignPage() {
 
       <Section title="Scroll progress, chapters and scroll-driven reveal">
         <ProgressScrubber />
+      </Section>
+
+      <Section title="Chapter rail and segmented progress line">
+        <RailDemo />
       </Section>
 
       <Section title="Hairline grid with registration marks">

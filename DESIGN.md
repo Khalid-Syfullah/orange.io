@@ -81,3 +81,7 @@ Respect `prefers-reduced-motion`. Split text keeps an `aria-label` with the full
 - `ScrollProvider` (layout): Lenis driven by the GSAP ticker, synced with ScrollTrigger; writes `velocity`. `Stage`: one ScrollTrigger writes `progress`, restores it after resize/orientation changes.
 - `Beat` / `BeatLine` / `BeatLead` / `BeatCard`: beats share one position and are visible only inside `[at, out]`. Gaps between beats are deliberate travel.
 - Dev overlay (dev builds only): keys 1-8 jump to scene starts, `h` toggles. Reduced motion renders `StaticStory` (stacked chapters with still placeholders) instead of the stage.
+
+## Progress rail (src/components/design/rail.tsx, src/scroll/segments.ts)
+- `SegmentedLine`: SVG segments from `railSegments()` (scene, chapter and beat boundaries; slivers merged), lengths proportional to scroll span, 3px gaps at boundaries, each path carries `data-a` / `data-b`. Fill is `stroke-dashoffset` driven by the progress MotionValue.
+- `ChapterRail` (desktop, below the lower hairline): entries are links with `data-at`, `aria-current="step"`; the active one shows a leading rule and a `SplitReveal` label that swaps on chapter change. `MobileRail`: compact top line plus label; the menu Sheet lists chapters. Clicks use `lenis.scrollTo` with distance-scaled duration and the shared easing.

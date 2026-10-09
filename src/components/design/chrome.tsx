@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion, useMotionValueEvent } from "motion/react";
 import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,21 +11,11 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
-import { EASE } from "@/lib/motion";
-import { progress as sharedProgress, scrollToChapter } from "@/lib/progress";
-import { CHAPTERS, chapterIndex } from "@/lib/timeline";
+import { scrollToChapter } from "@/lib/progress";
+import { CHAPTERS } from "@/lib/timeline";
+import { ChapterRail, MobileRail, useActiveChapter } from "./rail";
 import { cn } from "@/lib/utils";
-
-const TICK_GAP = 18; // px between chapter ticks on the rail
-
-function useActiveChapter(progress = sharedProgress) {
-  const [active, setActive] = useState(() => chapterIndex(progress.get()));
-  // state changes only when the chapter changes, never per scroll frame
-  useMotionValueEvent(progress, "change", (v) => setActive(chapterIndex(v)));
-  return active;
-}
 
 function Mark({ className }: { className?: string }) {
   return (
@@ -102,59 +91,24 @@ export function Chrome() {
             <nav aria-label="Chapters" className="px-4">
               <ChapterList active={active} onSelect={go} />
             </nav>
-            <SheetClose className="sr-only">Close</SheetClose>
           </SheetContent>
         </Sheet>
       </div>
 
-      {/* chapter rail along the left hairline (desktop) */}
-      <nav
-        aria-label="Chapter rail"
-        className="pointer-events-auto absolute top-1/2 hidden -translate-y-1/2 md:block"
-        style={{ left: "calc(var(--v1) - 8px)" }}
+      {/* chapter rail along the left hairline (desktop), below the lower hairline so it never meets the text columns */}
+      <div
+        className="absolute hidden md:block"
+        style={{
+          left: "calc(var(--v1) - 3px)",
+          top: "calc(var(--h2) + 20px)",
+          height: "clamp(90px, calc(100% - var(--h2) - 56px), 170px)",
+        }}
       >
-        <div className="relative" style={{ height: CHAPTERS.length * TICK_GAP, width: 220 }}>
-          {CHAPTERS.map((c, i) => (
-            <button
-              key={c.id}
-              type="button"
-              aria-label={c.label}
-              aria-current={i === active ? "step" : undefined}
-              onClick={() => go(i)}
-              className="absolute left-0 flex h-[18px] w-4 items-center outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              style={{ top: i * TICK_GAP }}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "h-px transition-[width,background-color] duration-500 ease-out-soft",
-                  i === active ? "w-4 bg-orange" : "w-2 bg-foreground/40",
-                )}
-              />
-            </button>
-          ))}
-          <motion.div
-            aria-hidden="true"
-            className="absolute left-6 flex h-[18px] items-center gap-3"
-            animate={{ y: active * TICK_GAP }}
-            transition={{ duration: 0.8, ease: EASE }}
-          >
-            <span className="h-px w-5 bg-foreground/60" />
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.span
-                key={active}
-                className="text-label whitespace-nowrap"
-                initial={{ opacity: 0, y: "0.4em" }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: "-0.4em" }}
-                transition={{ duration: 0.5, ease: EASE }}
-              >
-                {CHAPTERS[active].label}
-              </motion.span>
-            </AnimatePresence>
-          </motion.div>
-        </div>
-      </nav>
+        <ChapterRail onSelect={go} height="100%" />
+      </div>
+
+      {/* compact indicator (mobile); the menu Sheet holds the chapter list */}
+      <MobileRail className="absolute inset-x-4 top-1.5 md:hidden" />
 
       {/* CTA, top right inside the top hairline */}
       <div

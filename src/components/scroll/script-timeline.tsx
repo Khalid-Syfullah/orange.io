@@ -25,7 +25,7 @@ export function ScriptTimeline() {
   };
 
   return (
-    <div className="pointer-events-auto fixed bottom-3 left-3 z-[10000] w-[min(92vw,46rem)] rounded-[4px] bg-ink/90 p-3 text-cream">
+    <div className="pointer-events-auto fixed bottom-3 left-1/2 z-[10000] w-[min(92vw,40rem)] -translate-x-1/2 rounded-[4px] bg-ink/90 p-3 text-cream">
       <p className="text-meta mb-2 !normal-case opacity-60">script · {STAGE_VH}vh · click to seek</p>
       <div className="relative cursor-crosshair select-none" onClick={seek} role="img" aria-label="Scroll script timeline">
         <Row label="scene">

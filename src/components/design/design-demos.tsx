@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { motionValue } from "motion/react";
 import { Chrome } from "./chrome";
 import { Hairlines } from "./hairlines";
+import { ChapterRail, MobileRail } from "./rail";
 import { HoverRoll } from "./hover-roll";
 import { SplitReveal } from "./split-reveal";
 import { Button } from "@/components/ui/button";
@@ -88,5 +90,40 @@ export function LiveChrome() {
       <Hairlines />
       <Chrome />
     </>
+  );
+}
+
+/** Rail review: drag a fake progress value through the desktop and mobile rails. */
+export function RailDemo() {
+  const fake = useMemo(() => motionValue(0), []);
+  const [value, setValue] = useState(0);
+  return (
+    <div className="grid gap-8">
+      <label className="text-meta grid gap-2">
+        Fake progress: {value.toFixed(3)}
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.001}
+          value={value}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            setValue(v);
+            fake.set(v);
+          }}
+          className="w-full max-w-xl accent-orange"
+        />
+      </label>
+      <div className="grid gap-8 md:grid-cols-[auto_1fr]">
+        <div className="border border-hairline p-6">
+          <ChapterRail progress={fake} onSelect={(i) => { const at = CHAPTERS[i].at; setValue(at); fake.set(at); }} />
+        </div>
+        <div className="max-w-sm border border-hairline p-4">
+          <p className="text-meta mb-3 text-foreground/60">Mobile indicator</p>
+          <MobileRail progress={fake} />
+        </div>
+      </div>
+    </div>
   );
 }

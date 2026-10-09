@@ -1,6 +1,7 @@
 import { motionValue } from "motion/react";
 import type Lenis from "lenis";
 import { CHAPTERS } from "./timeline";
+import { easeOutSoft } from "./motion";
 
 /**
  * The one shared scroll progress value (0-1). The scroll engine (Lenis + one
@@ -23,7 +24,10 @@ export function scrollToProgress(p: number, opts: { immediate?: boolean } = {}) 
   const target = top + Math.max(0, span) * p;
   if (engine.lenis) {
     engine.lenis.resize(); // limits can be stale right after a resize
-    engine.lenis.scrollTo(target, { immediate: opts.immediate, duration: 1.6 });
+    // duration grows with distance (in viewport heights), same easing as the UI
+    const dist = Math.abs(target - window.scrollY) / window.innerHeight;
+    const duration = Math.min(4, 0.8 + dist * 0.08);
+    engine.lenis.scrollTo(target, { immediate: opts.immediate, duration, easing: easeOutSoft });
   } else {
     window.scrollTo({ top: target, behavior: opts.immediate ? "auto" : "smooth" });
   }
