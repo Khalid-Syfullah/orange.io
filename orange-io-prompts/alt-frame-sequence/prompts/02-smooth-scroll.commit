@@ -1,0 +1,4 @@
+feat(scroll): add smooth scrolling synced with ScrollTrigger
+
+Add a Lenis smooth-scroll module driven by the GSAP ticker, with
+reduced-motion handling and anchor links routed through the scroller.

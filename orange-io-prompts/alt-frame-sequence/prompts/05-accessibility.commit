@@ -1,0 +1,5 @@
+feat(a11y): add reduced-motion and no-JS hero fallbacks
+
+Show the final composition statically for reduced motion and without
+JavaScript, hide decorative layers from assistive tech, and fix focus
+order and contrast.

@@ -1,0 +1,4 @@
+feat(scroll): add dither transitions, fly layer and parallax
+
+Add the dither dissolve between scenes, a fly layer that carries the
+orange across scenes, camera dolly and drifting halftone clouds.

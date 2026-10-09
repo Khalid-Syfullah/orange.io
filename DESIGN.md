@@ -1,0 +1,72 @@
+# Orange.io — Design Spec
+
+A calm, editorial, art-directed, scroll-driven site. The look comes from restraint: a few strict tokens, light serif headlines, tiny monospace labels, hairline grid lines, and one hero moment. It borrows *techniques* from premium studio sites, never their assets, copy or imagery.
+
+## Fonts
+All free, loaded in `src/lib/fonts.ts` (the only place fonts are chosen; swap licensed fonts there). Exposed as `--font-display`, `--font-text`, `--font-mono` and Tailwind `font-display`, `font-text`, `font-mono`. (next/font writes to internal `--nf-*` variables to avoid self-referencing CSS variables.)
+
+| Role | Family | Use |
+| --- | --- | --- |
+| Display | Newsreader, weight 300, optical size on | Sentence case, tracking -0.02em, leading 0.9–1.0. Italic for one emphasized word per headline at most |
+| Text | Geist 400 | 13–20px, leading 1.3–1.45, negative tracking only on large sizes |
+| Mono | Geist Mono 500 | Uppercase, 9–12px, tracking 0.04em (meta) / 0.18em (buttons, labels) |
+
+## Type scale (utilities)
+| Class | Size | Font | Tracking | Leading |
+| --- | --- | --- | --- | --- |
+| `text-display-xl` | clamp(2.75rem, 1rem + 5.3vw, 5.5rem) | Newsreader 300 | -0.02em | 0.9 |
+| `text-display-l` | clamp(2rem, 1rem + 2.6vw, 3.25rem) | Newsreader 300 | -0.02em | 1 |
+| `text-title` | 1.625rem | Newsreader 400 | -0.02em | 0.95 |
+| `text-lead` | 1.25rem | Geist 400 | -0.02em | 1.2 |
+| `text-body` | 0.8125–0.9375rem | Geist 400 | 0 | 1.3 |
+| `text-label` | 0.6875rem | Geist Mono 500 uppercase | 0.18em | 1.2 |
+| `text-meta` | 0.75rem | Geist Mono 500 uppercase | 0.04em | 1.2 |
+
+## Colour
+| Token | Value | Use |
+| --- | --- | --- |
+| `--orange` | #FF7800 | Accent, sparingly: one CTA, small marks, the fruit |
+| `--cream` | #F7F3EA | Paper, light sections (shadcn `background`) |
+| `--ink` | #181818 | Dark sections, text on cream (shadcn `foreground`) |
+| `--press` | #0F0D0A | Deepest background for the final reveal |
+| `--leaf` | #476B35 | Foliage |
+| `--apricot` | #FFD9A8 | Hero sky glow |
+| `--clay` | #E9DCC6 | Soft panels (shadcn `muted`, `secondary`) |
+
+Hairlines: 1px at 20% of the foreground (`--hairline`). Light theme only; `.panel-press` is a section style, not a theme switch. shadcn tokens (`background`, `foreground`, `primary`, `muted`, `border`, `ring`) are mapped to these in `globals.css`.
+
+## Shape and surface
+- **Pill buttons** (`PillButton`): radius 999px, 1px border at 20% foreground, inset 1px top highlight at 16% white, 1px dark bottom edge, mono `label` text, arrow icon in a square chip. Hover: border to 40%, chip slides 2px.
+- **Tags** (`Tag`): radius 4px, background 10% foreground, mono 8–9px uppercase, padding 5px 8px.
+- Static film grain overlay at 3–5% opacity (`.grain`), halftone dots for clouds and shadows (`.halftone`). No drop-shadow cards, no gradients on UI.
+
+## Layout grid
+Percentage/vw grid. `--v1: 5.3%` left hairline, `--v2: 85.6%` right hairline, `--h1: 5.3vw` top hairline, `--h2: calc(65.3% + 50px)` lower hairline. Text column A starts near 8% (`--col-a`), column B near 24% (`--col-b`). Four-point registration stars sit where hairlines cross; small tick marks run down the left rail.
+Fixed chrome: mark top-left (~20px, aligned to `--v1`), grid/menu icon below it, chapter label and ticks along the left hairline, pill "Say hello" top-right inside the top hairline.
+Hero: headline (`display-xl`, left, around 45% height), two-line lead, pill CTA, then a small Tag and short paragraph at lower left; art fills the right 55% and bleeds off the edges.
+Right-column cards: mono Tag, `display-l` title, body paragraph over the art; each enters and leaves as a beat.
+
+## Motion language
+- One easing everywhere: `cubic-bezier(0.22, 1, 0.36, 1)` — `--ease-out-soft` in CSS, `EASE` in `src/lib/motion.ts`. Reveal durations 0.5–1.2s.
+- Headlines and key lines reveal by character via `SplitReveal`: spans staggered 12–20ms, each fading up 0.4em. Driven by `whileInView` or a scroll `MotionValue`.
+- Side rail of chapters ("Ch. 1 The Seed") with active state and a thin progress line.
+- Hover on interactive text swaps characters with a short vertical roll.
+- `prefers-reduced-motion`: reveals become simple fades, scroll scenes become still frames.
+
+## Scroll model
+Native scrolling on one very tall stage (~53 viewport heights). A fixed full-viewport stack stays put: persistent WebGL canvas, transition canvas, fly canvas, hairline canvas, DOM text. Lenis plus a single GSAP ScrollTrigger write normalized 0–1 progress into one shared `MotionValue`. Text is a set of **beats** that fade in and out at scroll ranges in the same spot; long **travel** stretches have no text. Chapters group the beats. Scene changes use a dither/pixel dissolve, a slow camera dolly, drifting halftone clouds for parallax, and one element that flies across each transition.
+- Ranges live only in `src/lib/timeline.ts` (`SCENES`, `sceneProgress`). Never hardcode ranges in components.
+- No time-based animation on scroll-controlled elements; no React state updates per scroll frame.
+- Stack roles: shadcn/ui for interface; `motion/react` for DOM and text; React Three Fiber + drei for 3D; GSAP only for the scroll timeline and camera/object tweens.
+- 3D is procedural, behind small interfaces and a `models` config so GLB files can replace it via `useGLTF`.
+
+## Accessibility
+Respect `prefers-reduced-motion`. Split text keeps an `aria-label` with the full string. Visible focus rings (`--ring`). Text contrast ≥ 4.5:1 (ink on cream; cream on press). The scroll story must have a non-motion fallback.
+
+## Do not
+- Add other fonts, colours or easing curves.
+- Use gradients or drop shadows on UI, or a dark theme switch.
+- Use orange for anything beyond one CTA, small marks and the fruit.
+- Use uppercase for display text, or more than one italic word per headline.
+- Animate scroll-driven elements with time, or set React state per scroll frame.
+- Copy any reference site's assets, copy, imagery or logo.

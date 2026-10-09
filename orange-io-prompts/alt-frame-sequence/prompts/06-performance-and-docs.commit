@@ -1,0 +1,4 @@
+perf(hero): tune performance and document the hero sequence
+
+Remove avoidable work, confirm cleanup on unmount, and add a README
+section on swapping in the real assets and tuning the timeline.

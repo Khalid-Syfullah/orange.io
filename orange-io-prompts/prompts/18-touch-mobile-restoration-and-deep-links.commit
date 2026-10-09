@@ -1,0 +1,4 @@
+feat(scroll): harden touch, restoration and deep links
+
+Add mobile pacing, scroll restoration, hash deep links, resize
+handling and keyboard shortcuts.

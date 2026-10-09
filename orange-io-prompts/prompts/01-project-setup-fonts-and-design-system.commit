@@ -1,0 +1,4 @@
+chore(core): set up Next.js stack, fonts and design system
+
+Install Tailwind, shadcn/ui, motion, GSAP, Lenis and React Three Fiber,
+load Newsreader, Geist and Geist Mono, and write DESIGN.md with tokens.

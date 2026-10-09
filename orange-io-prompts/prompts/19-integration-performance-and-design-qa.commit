@@ -1,0 +1,4 @@
+perf(site): tune scroll pacing, performance and design QA
+
+Unify the scenes, tune stage length and beat timing, add adaptive
+quality and accessibility checks, and document the experience.

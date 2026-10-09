@@ -1,0 +1,4 @@
+feat(scroll): add pointer sheen and velocity reactions
+
+Add a pointer-following highlight, scroll-velocity breathing and
+light pointer parallax.

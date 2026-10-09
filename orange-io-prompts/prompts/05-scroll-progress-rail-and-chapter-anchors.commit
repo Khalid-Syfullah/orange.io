@@ -1,0 +1,4 @@
+feat(ui): add segmented scroll progress rail
+
+Draw a rail progress line whose segments map to scenes and beats, with
+chapter anchors, animated labels and keyboard support.

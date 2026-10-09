@@ -1,0 +1,4 @@
+docs(scroll): write the scroll script with pacing budget and beats
+
+Add a data-driven scroll script with scene budgets, beat table, travel
+stretches, chapter anchors and a validator with a timeline panel.

@@ -1,0 +1,4 @@
+feat(scroll): choreograph hairline frame between chapters
+
+Slide grid lines out to the edges and lock corner marks on chapter
+changes, scrubbed by scroll progress.

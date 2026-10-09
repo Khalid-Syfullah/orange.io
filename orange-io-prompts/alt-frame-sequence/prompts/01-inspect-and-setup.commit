@@ -1,0 +1,4 @@
+chore(hero): set up dependencies and hero config
+
+Install gsap and lenis, add the hero config module that holds the frame,
+timeline, and copy settings, and create the public asset folders.

@@ -1,0 +1,4 @@
+feat(scene): animate watering with scroll-driven water
+
+Add the synchronized watering sequence with deterministic, reversible
+water droplets and soil darkening.

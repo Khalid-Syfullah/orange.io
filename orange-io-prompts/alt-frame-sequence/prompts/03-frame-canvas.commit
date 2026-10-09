@@ -1,0 +1,4 @@
+feat(hero): add canvas frame-sequence player
+
+Draw numbered frames to a canvas with cover sizing, progressive loading,
+separate desktop and mobile sets, and a generated placeholder mode.

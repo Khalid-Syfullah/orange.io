@@ -1,0 +1,4 @@
+feat(scene): add pinned right-column card groups
+
+Add swapping card groups, a terms block and a contact form inside the
+stage, scrubbed by scroll progress.

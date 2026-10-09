@@ -1,0 +1,4 @@
+feat(scroll): add tall stage, Lenis engine and beat system
+
+Sync Lenis with ScrollTrigger on a tall native stage, write one 0-1
+progress value and show text as scroll-ranged beats.

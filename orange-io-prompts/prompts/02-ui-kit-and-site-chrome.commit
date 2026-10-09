@@ -1,0 +1,4 @@
+feat(ui): add pill buttons, split-text reveal and site chrome
+
+Add shadcn-based Button and Tag variants, the character reveal, hairline
+grid overlay, grain and the chapter rail.
