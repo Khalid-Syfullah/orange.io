@@ -31,6 +31,6 @@ export function scrollToProgress(p: number, opts: { immediate?: boolean } = {}) 
 
 /** Jump to a chapter: progress when the stage exists, otherwise its static section. */
 export function scrollToChapter(i: number) {
-  if (engine.stage) return scrollToProgress(CHAPTERS[i].range[0]);
+  if (engine.stage) return scrollToProgress(CHAPTERS[i].at);
   document.getElementById(`chapter-${CHAPTERS[i].id}`)?.scrollIntoView({ behavior: "smooth" });
 }

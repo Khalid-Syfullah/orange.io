@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useMotionValueEvent } from "motion/react";
 import { progress, scrollToProgress } from "@/lib/progress";
 import { SCENES, SCENE_NAMES, activeBeats, currentChapter, currentScene, vh } from "@/lib/timeline";
+import { validateScript } from "@/scroll/script";
+import { ScriptTimeline } from "./script-timeline";
 
 /** Dev-only. Keys 1-8 jump to scene starts, "h" hides/shows the panel. Updates the DOM directly. */
 export function DevOverlay() {
@@ -20,13 +22,14 @@ function Overlay() {
     const s = currentScene(p);
     out.current.textContent = [
       `progress ${p.toFixed(4)}`,
-      `vh       ${vh(p).toFixed(1)}`,
+      `stage vh ${vh(p).toFixed(1)}`,
       `scene    ${s}`,
       `chapter  ${currentChapter(p).name}`,
       `beats    ${activeBeats(p).map((b) => b.id).join(", ") || "(travel)"}`,
     ].join("\n");
   };
   useEffect(() => render(progress.get()), [hidden]);
+  useEffect(() => validateScript(), []); // throws in dev if the script breaks its own rules
   useMotionValueEvent(progress, "change", render);
 
   useEffect(() => {
@@ -44,9 +47,12 @@ function Overlay() {
 
   if (hidden) return null;
   return (
+    <>
+    <ScriptTimeline />
     <div className="pointer-events-none fixed right-3 bottom-3 z-[10000] rounded-[4px] bg-ink/90 p-3 text-cream">
       <pre ref={out} className="text-meta !normal-case" />
       <p className="text-meta mt-2 !normal-case opacity-60">keys 1-8 scenes · h hide</p>
     </div>
+    </>
   );
 }
