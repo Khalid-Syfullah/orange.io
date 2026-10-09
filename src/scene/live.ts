@@ -1,7 +1,7 @@
 import type { Boundary, SceneName } from "@/scroll/script";
 
 /** Scenes drawn by the live 3D world. Later scenes still show placeholder plates. */
-export const WORLD_SCENES: readonly SceneName[] = ["opening", "watering", "growth", "ripening"];
+export const WORLD_SCENES: readonly SceneName[] = ["opening", "watering", "growth", "ripening", "plucking"];
 
 /**
  * A dissolve out of a live scene is composited inside the scene canvas, because

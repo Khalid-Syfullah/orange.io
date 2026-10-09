@@ -5,10 +5,11 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { gsap } from "gsap";
 import type { Group, Object3D, PerspectiveCamera } from "three";
 import { progress } from "@/lib/progress";
-import { GROWTH, WATERING as W } from "@/scroll/script";
+import { GROWTH, RIPENING, WATERING as W } from "@/scroll/script";
 import { ContactShadow, Ground, Lights, Sky } from "./environment";
 import { Person, restPose, type Pose, type PersonStyle } from "./person";
-import { GrowingTree } from "./growing-tree";
+import { Vector3 } from "three";
+import { GrowingTree, heroFruitPosition } from "./growing-tree";
 import { WaterStreams, WetSoil, type WaterRefs } from "./watering-effects";
 import { useInvalidateOn } from "@/scene/webgl";
 
@@ -18,10 +19,10 @@ const WOMAN: PersonStyle = { kind: "woman", height: 1.68, skin: "#e2b08a", hair:
 /** Where the world sits in the frame: the tree right of centre so the headline owns the left. */
 const WORLD_OFFSET: [number, number, number] = [2.15, -1.5, 0];
 
-type Rig = { man: Pose; woman: Pose; cam: { dx: number; dy: number; dz: number } };
+type Rig = { man: Pose; woman: Pose; cam: { dx: number; dy: number; dz: number }; focus: { b: number } };
 
 /** The timeline is authored in progress units, so a tween at 0.12 happens at progress 0.12. */
-const END = GROWTH.fruit[1];
+const END = RIPENING.focus[1];
 
 /**
  * Scenes 01 and 02 on one paused GSAP timeline, scrubbed from the shared
@@ -53,6 +54,8 @@ function buildTimeline(rig: Rig) {
   tl.to(rig.cam, { dz: -0.6, dy: 0.1, duration: W.liftAt, ease: "none" }, 0).to(rig.cam, { dz: -1.9, dx: 0.9, dy: 0.05, duration: W.relaxAt - W.liftAt, ease: "none" }, W.liftAt);
   // Scene 03: keep closing in on the tree, rising as it grows, until it fills most of the frame
   tl.to(rig.cam, { dz: -2.6, dx: 1.85, dy: 0.4, duration: GROWTH.fruit[1] - W.relaxAt, ease: "none" }, W.relaxAt);
+  // Scene 04: glide from the medium shot to a close-up of one orange
+  tl.to(rig.focus, { b: 1, duration: RIPENING.focus[1] - GROWTH.fruit[1], ease: "power2.inOut" }, GROWTH.fruit[1]);
   tl.set({}, {}, END); // make the timeline exactly END long
   return tl;
 }
@@ -64,12 +67,39 @@ function attachGroup(w: WaterRefs, g: Group | null) {
   w.group = g;
 }
 
-/** Plain per-frame step: scrub the timeline and nudge the camera. */
+/** Where the selected fruit is in world space (constant once it stops growing). */
+export const focusTarget = { x: 0, y: 0, z: 0 };
+const FOCUS_DISTANCE = 1.65; // camera to fruit at the end: the fruit fills about a fifth of the frame
+const FOCUS_SCREEN = { x: -0.21, y: -0.03 }; // aim slightly left of / below the fruit so it sits centre-right
+const HERO_AT = RIPENING.size[0] + 0.001;
+const tmp = { fruit: new Vector3(), rest: new Vector3(), look: new Vector3(), dir: new Vector3() };
+
+/** Plain per-frame step: scrub the timeline, nudge the camera, then blend into the close-up. */
 function step(tl: gsap.core.Timeline, rig: Rig, camera: PerspectiveCamera, p: number) {
   tl.time(Math.min(p, END));
   camera.position.x += rig.cam.dx;
   camera.position.y += rig.cam.dy;
   camera.position.z += rig.cam.dz;
+
+  heroFruitPosition(HERO_AT, tmp.fruit);
+  tmp.fruit.x += WORLD_OFFSET[0];
+  tmp.fruit.y += WORLD_OFFSET[1];
+  tmp.fruit.z += WORLD_OFFSET[2];
+  focusTarget.x = tmp.fruit.x;
+  focusTarget.y = tmp.fruit.y;
+  focusTarget.z = tmp.fruit.z;
+  const b = rig.focus.b;
+  if (b > 0) {
+    // the rest pose keeps looking where the rig was looking; the focus pose frames the fruit
+    camera.getWorldDirection(tmp.dir);
+    tmp.rest.copy(camera.position).addScaledVector(tmp.dir, FOCUS_DISTANCE);
+    tmp.look.set(tmp.fruit.x + FOCUS_SCREEN.x, tmp.fruit.y + FOCUS_SCREEN.y, tmp.fruit.z);
+    camera.position.x += (tmp.fruit.x + FOCUS_SCREEN.x - camera.position.x) * b;
+    camera.position.y += (tmp.fruit.y + FOCUS_SCREEN.y - camera.position.y) * b;
+    camera.position.z += (tmp.fruit.z + FOCUS_DISTANCE - camera.position.z) * b;
+    tmp.rest.lerp(tmp.look, b);
+    camera.lookAt(tmp.rest);
+  }
 }
 
 /**
@@ -79,7 +109,7 @@ function step(tl: gsap.core.Timeline, rig: Rig, camera: PerspectiveCamera, p: nu
  */
 export function OpeningWorld({ groupRef }: { groupRef: React.RefObject<Group | null> }) {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
-  const rig = useMemo<Rig>(() => ({ man: restPose(), woman: restPose(), cam: { dx: 0, dy: 0, dz: 0 } }), []);
+  const rig = useMemo<Rig>(() => ({ man: restPose(), woman: restPose(), cam: { dx: 0, dy: 0, dz: 0 }, focus: { b: 0 } }), []);
   const tl = useMemo(() => buildTimeline(rig), [rig]);
   useEffect(() => () => void tl.kill(), [tl]);
   useInvalidateOn(progress);

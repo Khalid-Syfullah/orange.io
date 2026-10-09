@@ -143,3 +143,49 @@ void main() {
   #include <colorspace_fragment>
 }
 `;
+
+/**
+ * Depth of field: a 16-tap spiral gather whose radius follows each pixel's
+ * circle of confusion (distance from the focus plane). Neighbours are weighted
+ * by their own blur so a sharp subject does not bleed into the soft background.
+ */
+export const DOF_FRAG = /* glsl */ `
+varying vec2 vUv;
+uniform sampler2D uColor;
+uniform sampler2D uDepth;
+uniform float uNear;
+uniform float uFar;
+uniform float uFocus;   // view-space distance in focus
+uniform float uDead;    // distance around the focus that stays sharp
+uniform float uRange;   // distance over which blur reaches its maximum
+uniform float uStrength;
+uniform float uRadius;  // max blur radius in pixels
+uniform vec2 uTexel;
+
+float linearDepth(float d) {
+  float ndc = d * 2.0 - 1.0;
+  return 2.0 * uNear * uFar / (uFar + uNear - ndc * (uFar - uNear));
+}
+float coc(vec2 uv) {
+  float z = linearDepth(texture2D(uDepth, uv).x);
+  return clamp((abs(z - uFocus) - uDead) / uRange, 0.0, 1.0) * uStrength;
+}
+
+void main() {
+  float c = coc(vUv);
+  vec3 acc = texture2D(uColor, vUv).rgb;
+  float wsum = 1.0;
+  if (c > 0.002) {
+    for (int i = 0; i < 16; i++) {
+      float a = float(i) * 2.39996;
+      float r = sqrt((float(i) + 0.5) / 16.0);
+      vec2 uv = vUv + vec2(cos(a), sin(a)) * r * uRadius * c * uTexel;
+      float w = 0.15 + coc(uv);
+      acc += texture2D(uColor, uv).rgb * w;
+      wsum += w;
+    }
+  }
+  gl_FragColor = vec4(acc / wsum, 1.0);
+  #include <colorspace_fragment>
+}
+`;

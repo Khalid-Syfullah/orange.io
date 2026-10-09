@@ -78,7 +78,7 @@ const BEAT_SPECS: readonly BeatSpec[] = [
   { id: "plant", slot: "left-line", scene: "watering", atVh: 20, dwellVh: 100, side: "left", kind: "headline", title: "We plant.", lead: "TODO: one line about the seed." },
   { id: "tend", slot: "left-line", scene: "watering", atVh: 150, dwellVh: 100, side: "left", kind: "headline", title: "Every idea needs care.", lead: "TODO: one line about the water." },
   { id: "wait", slot: "left-line", scene: "growth", atVh: 25, dwellVh: 110, side: "left", kind: "headline", title: "Growth takes time.", lead: "TODO: one line about patience." },
-  { id: "grow", slot: "left-line", scene: "ripening", atVh: 30, dwellVh: 110, side: "left", kind: "headline", title: "We grow.", lead: "TODO: one line about ripening." },
+  { id: "grow", slot: "left-line", scene: "ripening", atVh: 30, dwellVh: 110, side: "left", kind: "headline", title: "Every effort bears fruit.", lead: "TODO: one line about ripening." },
   { id: "pick", slot: "left-line", scene: "plucking", atVh: 25, dwellVh: 100, side: "left", kind: "headline", title: "We pick.", lead: "TODO: one line about the harvest." },
   { id: "floating-card", slot: "right-card", scene: "floating", atVh: 40, dwellVh: 120, side: "right", kind: "card", tag: "TODO tag", title: "TODO card title", lead: "TODO: a short paragraph that sits in the right column over the art." },
   { id: "inside", slot: "left-line", scene: "split", atVh: 30, dwellVh: 120, side: "left", kind: "headline", title: "There is more inside.", lead: "TODO: one line about what is inside." },
@@ -214,7 +214,7 @@ export const TRANSITION_VH = 45;
 export type Boundary = { index: number; from: SceneName; to: SceneName; atVh: number; startVh: number };
 
 /** Scenes entered by a slow camera dolly instead of a dissolve (the world simply continues). */
-export const NO_DISSOLVE: readonly SceneName[] = ["watering", "growth", "ripening"];
+export const NO_DISSOLVE: readonly SceneName[] = ["watering", "growth", "ripening", "plucking"];
 
 /** One boundary per dissolved scene change: watering->growth, growth->ripening, ... */
 export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1)
@@ -230,7 +230,7 @@ export const BOUNDARIES: readonly Boundary[] = SCENE_NAMES.slice(1)
 
 /** Named positions the fly element (the orange) travels between. x/y are viewport percent. */
 export const FLY_ANCHORS = {
-  treeFruit: { x: 66.3, y: 37.8, scale: 0.23, rotate: 0 },
+  treeFruit: { x: 62.1, y: 51.6, scale: 1.69, rotate: 0 },
   hand: { x: 63, y: 52, scale: 0.7, rotate: -24 },
   center: { x: 64, y: 50, scale: 1.3, rotate: 200 },
 } as const;
@@ -242,8 +242,8 @@ export type FlyAnchor = keyof typeof FLY_ANCHORS;
  * plucking -> floating dissolve window so the eye follows it across the cut.
  */
 export const FLY_PATH: readonly { vh: number; anchor: FlyAnchor; opacity: number }[] = [
-  { vh: 1006, anchor: "treeFruit", opacity: 0 },
-  { vh: 1010, anchor: "treeFruit", opacity: 1 },
+  { vh: 1340, anchor: "treeFruit", opacity: 0 },
+  { vh: 1344, anchor: "treeFruit", opacity: 1 },
   { vh: 1420, anchor: "treeFruit", opacity: 1 },
   { vh: 1500, anchor: "hand", opacity: 1 },
   { vh: 1587, anchor: "hand", opacity: 1 },
@@ -281,8 +281,19 @@ export const GROWTH = {
 /** Halftone clouds ease down to this share of their speed as growth ends (continuous: see cloudPhase). */
 export const CLOUD_SLOWDOWN = { from: 0.38, to: 0.42, speed: 0.35 } as const;
 
-/** Fruit colour goes from green to orange over this progress range (ripening scene). */
-export const FRUIT_RIPEN = [0.42, 0.56] as const;
+/** Scene 04 windows, as progress. */
+export const RIPENING = {
+  size: [0.42, 0.46], // the oranges grow
+  toYellow: [0.46, 0.51], // green to yellow-orange
+  ripe: [0.51, 0.54], // fully ripe
+  focus: [0.54, 0.56], // the camera singles out one orange
+} as const satisfies Record<string, readonly [number, number]>;
+
+/** The three colours of the ripening, interpolated in OKLab. */
+export const RIPE_COLORS = { green: "#568C43", mid: "#B4A83B", ripe: "#FF8500" } as const;
+
+/** The fly layer takes the selected fruit over when the focus move ends. */
+export const FLY_HANDOVER = RIPENING.focus[1];
 
 // ------------------------------------------------------------ validation ---
 

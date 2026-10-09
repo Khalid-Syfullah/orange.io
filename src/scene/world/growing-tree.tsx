@@ -5,7 +5,8 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { CanvasTexture, Color, InstancedMesh, Object3D, Quaternion, RepeatWrapping, SRGBColorSpace, Vector3, type Group, type PerspectiveCamera } from "three";
 import { progress, velocityNorm } from "@/lib/progress";
 import { branchGrowth, fruitSize, fruitStem, leafUnfold, secondaryGrowth, trunkHeight } from "@/scroll/growth";
-import { FRUIT_RIPEN, GROWTH } from "@/scroll/script";
+import { FLY_HANDOVER, GROWTH } from "@/scroll/script";
+import { focusMove, ripenGrowth, ripenRgb } from "@/scroll/ripening";
 import { ModelSlot } from "./model-slot";
 import { mulberry32 } from "./rng";
 
@@ -81,6 +82,15 @@ const L = buildLayout();
 const STICKS = 6 + PRIMARIES * 2 + L.secondaries.length * 2 + FRUITS;
 const LEAF_COLORS = ["#476b35", "#587d3f", "#6a9048", "#3f6130"];
 const FRUIT_GREEN = "#9db85a";
+/** Each fruit ripens a touch earlier or later, so they never all change at once. */
+const FRUIT_STAGGER = Array.from({ length: FRUITS }, (_, k) => ((k % 5) - 2) * 0.004);
+const rgb: [number, number, number] = [0, 0, 0];
+const tint = new Color();
+const hero = new Vector3();
+const smoothstep = (t: number) => {
+  const x = Math.min(1, Math.max(0, t));
+  return x * x * (3 - 2 * x);
+};
 
 // ---------------------------------------------------------- scratch math ---
 const UP = new Vector3(0, 1, 0);
@@ -139,6 +149,18 @@ function writeStick(mesh: InstancedMesh, i: number, a: Vector3, b: Vector3, r: n
   mesh.setMatrixAt(i, dummy.matrix);
 }
 
+/**
+ * Where the hero fruit hangs once it has stopped growing (local to the tree
+ * group; the world offset is added by the caller). Pure: growth is finished by then.
+ */
+export function heroFruitPosition(p: number, out: Vector3): Vector3 {
+  const F = L.fruits[HERO_FRUIT];
+  secondaryPoint(p, F.sec, F.t, out);
+  const size = fruitSize(p, HERO_FRUIT) * 0.075 * ripenGrowth(p + FRUIT_STAGGER[HERO_FRUIT]);
+  out.y -= 0.14 * fruitStem(p, HERO_FRUIT) + size * 0.9;
+  return out;
+}
+
 // ------------------------------------------------------------- per frame ---
 
 export type HeroFruit = { x: number; y: number; size: number; visible: boolean };
@@ -186,23 +208,30 @@ function stepTree(m: Meshes, group: Group, camera: PerspectiveCamera, p: number,
   for (let k = 0; k < FRUITS; k++) {
     const F = L.fruits[k];
     const stem = fruitStem(p, k);
-    const size = fruitSize(p, k) * (k === HERO_FRUIT ? 0.075 : 0.062);
+    const size = fruitSize(p, k) * (k === HERO_FRUIT ? 0.075 : 0.062) * ripenGrowth(p + FRUIT_STAGGER[k]);
     secondaryPoint(p, F.sec, F.t, A);
     B.set(A.x, A.y - 0.14 * stem, A.z);
     writeStick(m.sticks, n++, A, B, stem > 0.001 ? 0.005 : 0);
     // the fly layer takes over the hero fruit when ripening begins
-    const handedOver = k === HERO_FRUIT && p >= FRUIT_RIPEN[0];
+    const handedOver = k === HERO_FRUIT && p >= FLY_HANDOVER;
     const r = handedOver ? 0 : size;
     dummy.position.set(B.x, B.y - size * 0.9, B.z);
     dummy.quaternion.identity();
     dummy.scale.setScalar(r);
     dummy.updateMatrix();
     m.fruits.setMatrixAt(k, dummy.matrix);
+    // ripening: green to yellow-orange to ripe, mixed in OKLab, per-fruit stagger
+    const [cr, cg, cb] = ripenRgb(p + FRUIT_STAGGER[k], rgb);
+    m.fruits.setColorAt(k, tint.setRGB(cr, cg, cb, SRGBColorSpace));
     if (size > 0) projectFruit(k === HERO_FRUIT ? heroFruit : fruitScreen[k], group, camera, dummy.position, size);
   }
   m.sticks.instanceMatrix.needsUpdate = true;
   m.fruits.instanceMatrix.needsUpdate = true;
+  if (m.fruits.instanceColor) m.fruits.instanceColor.needsUpdate = true;
 
+  // leaves near the selected fruit part as the camera singles it out, so nothing hides it
+  const parting = focusMove(p);
+  heroFruitPosition(p, hero);
   // leaves ride their branches; they unfold and grow inside their own windows; wind follows scroll
   for (let i = 0; i < L.leaves.length; i++) {
     const l = L.leaves[i];
@@ -212,8 +241,10 @@ function stepTree(m: Meshes, group: Group, camera: PerspectiveCamera, p: number,
     dummy.position.copy(A).addScaledVector(l.off, 0.4 + 0.6 * u);
     // folded (pointing up and narrow) while emerging, open once unfolded
     dummy.rotation.set(l.tilt * u + (1 - u) * 1.2 + s, l.yaw, s * 0.6);
-    const k = l.scale * u;
-    dummy.scale.set(0.15 * k, 0.035 * k * (0.4 + 0.6 * u), 0.085 * (0.3 + 0.7 * u) * l.scale * (u > 0 ? 1 : 0));
+    const near = dummy.position.distanceTo(hero);
+    const clear = 1 - parting * (1 - smoothstep((near - 0.1) / 0.2));
+    const k = l.scale * u * clear;
+    dummy.scale.set(0.15 * k, 0.035 * k * (0.4 + 0.6 * u), 0.085 * (0.3 + 0.7 * u) * l.scale * clear * (u > 0 ? 1 : 0));
     dummy.updateMatrix();
     m.leaves.setMatrixAt(i, dummy.matrix);
   }
@@ -234,6 +265,52 @@ function projectFruit(out: HeroFruit, group: Group, camera: PerspectiveCamera, l
   // diameter as a share of the viewport height
   out.size = (radius * 2) / (2 * dist * Math.tan((camera.fov * Math.PI) / 360));
   out.visible = true;
+}
+
+/**
+ * Orange peel: fine pores, mottled colour variation and soft imperfections. The
+ * same canvas drives colour (multiplied with the ripening tint) and bump, so
+ * the pores catch the light instead of reading as a smooth plastic ball.
+ */
+function peelTexture() {
+  const size = 256;
+  const c = document.createElement("canvas");
+  c.width = c.height = size;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#e9e9e9";
+  g.fillRect(0, 0, size, size);
+  const rnd = mulberry32(21);
+  // soft mottling
+  for (let i = 0; i < 70; i++) {
+    const r = 10 + rnd() * 34;
+    const x = rnd() * size;
+    const y = rnd() * size;
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    const dark = rnd() > 0.5;
+    grad.addColorStop(0, dark ? "rgba(150,150,150,0.28)" : "rgba(255,255,255,0.32)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = grad;
+    g.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  // pores: many tiny dark pits, a few larger blemishes
+  for (let i = 0; i < 2600; i++) {
+    const r = 0.5 + rnd() * 1.1;
+    g.fillStyle = `rgba(70,70,70,${0.25 + rnd() * 0.35})`;
+    g.beginPath();
+    g.arc(rnd() * size, rnd() * size, r, 0, Math.PI * 2);
+    g.fill();
+  }
+  for (let i = 0; i < 14; i++) {
+    g.fillStyle = "rgba(90,90,90,0.22)";
+    g.beginPath();
+    g.arc(rnd() * size, rnd() * size, 2 + rnd() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  const t = new CanvasTexture(c);
+  t.colorSpace = SRGBColorSpace;
+  t.wrapS = t.wrapT = RepeatWrapping;
+  t.repeat.set(2, 1);
+  return t;
 }
 
 function barkTexture() {
@@ -271,7 +348,9 @@ export function GrowingTree() {
   const group = useRef<Group>(null);
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const bark = useMemo(() => barkTexture(), []);
+  const peel = useMemo(() => peelTexture(), []);
   useEffect(() => () => bark.dispose(), [bark]);
+  useEffect(() => () => peel.dispose(), [peel]);
   useEffect(() => {
     if (process.env.NODE_ENV === "development") Object.assign(window, { __heroFruit: heroFruit, __fruits: fruitScreen });
   }, []);
@@ -306,7 +385,7 @@ export function GrowingTree() {
         </instancedMesh>
         <instancedMesh ref={fruits} args={[undefined, undefined, FRUITS]} castShadow frustumCulled={false}>
           <sphereGeometry args={[1, 14, 10]} />
-          <meshStandardMaterial roughness={0.55} />
+          <meshPhysicalMaterial map={peel} bumpMap={peel} bumpScale={2.2} roughness={0.55} clearcoat={0.22} clearcoatRoughness={0.5} />
         </instancedMesh>
       </group>
     </ModelSlot>
